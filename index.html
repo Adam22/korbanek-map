@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link href="stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css" />
+		<link href="stylesheets/print.css" media="print" rel="stylesheet" type="text/css" />
+		<link href="stylesheets/styles.css" rel="stylesheet" type="text/css">
+		<!--[if IE]>
+		<link href="/stylesheets/ie.css" media="screen, projection" rel="stylesheet" type="text/css" />
+		<![endif]-->
+		<script type="text/javascript" src="javascripts/jquery-2.1.4.min.js"></script>
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&amp;sensor=false"></script>
+		<script type="text/javascript" src="javascripts/bootstrap.min.js"></script>
+		<script type="text/javascript" src="javascripts/korbanek-map.js" charset="UTF-8"></script>
+
+	</head>
+	<body>
+	<h2> Korbanek Map</h2>
+        <div class="form-group">
+          <label for="submit">Address</label>
+          <input type="textbox" class="form-control" id="address">
+          <input class="btn btn-default" type="submit" id="submit" value="Submit">
+        </div>        
+	<div class="map-container">
+            <div class="map" id="map" >    
+            </div>
+	</div>
+        <p class="output" id="output"></p>
+	</body>
+</html>
