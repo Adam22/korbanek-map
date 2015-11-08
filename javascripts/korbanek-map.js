@@ -186,7 +186,7 @@ $j(document).ready(function(){
                         if (typeof callback !== 'function') {
                             callback = false;
                         }
-                        else{
+                        else{                            
                         callback(latlng);
                         }
                     });                    
@@ -207,22 +207,6 @@ $j(document).ready(function(){
                     });
                 },
 
-		initialize: function() {
-                    this.createMap({lat: 52.265472, lng: 19.305168});
-                    this.geocoder = new google.maps.Geocoder();
-                    document.getElementById('submit').addEventListener('click', function(){
-                            korbanekMap.geocodeInputAddress(function(latlng){
-                                korbanekMap.putMarker(latlng, korbanekMap.map);
-                            });
-                    });
-                    this.geocodeAddress(this.markerSet.central.address, function(latlng){
-                        korbanekMap.markerSet.central.marker = korbanekMap.putMarker(latlng, korbanekMap.map);
-                        console.log(korbanekMap.markerSet.central.marker);
-                    });
-                    this.iterateMarkerSet();
-   	                 console.log(korbanekMap.markerSet.central.marker);
-		},
-                
                 putMarker: function(position,map) {                                        
                     return new google.maps.Marker({
                         map: map,
@@ -231,7 +215,21 @@ $j(document).ready(function(){
                         title: 'korbanek-map'
                     });
                 },
-                
+
+		initialize: function() {
+                    this.createMap({lat: 52.265472, lng: 19.305168});
+                    this.geocoder = new google.maps.Geocoder();
+                    document.getElementById('submit').addEventListener('click', function(){
+                            korbanekMap.geocodeInputAddress(function(latlng){
+                                korbanekMap.putMarker(latlng, korbanekMap.map);
+                                
+                            });
+                    });
+                    this.geocodeAddress(this.markerSet.central.address, function(latlng){
+                        korbanekMap.markerSet.central.marker = korbanekMap.putMarker(latlng, korbanekMap.map);                        
+                    });
+                    
+		},                                                
 	},        
 	google.maps.event.addDomListener(window, "load", korbanekMap.initialize());
 
