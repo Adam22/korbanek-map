@@ -8823,3 +8823,18 @@ button.close {
   bottom: 0;
   width: 5px;
 }
+
+/* line 46, ../sass/styles.scss */
+.gm-style div a div img {
+  display: none;
+}
+
+/* line 50, ../sass/styles.scss */
+.gmnoprint a, .gmnoprint span {
+  display: none;
+}
+
+/* line 54, ../sass/styles.scss */
+.gmnoprint div {
+  background: none !important;
+}

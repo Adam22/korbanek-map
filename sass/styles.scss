@@ -41,3 +41,16 @@
     bottom: 0;
     width: 5px;
 }
+
+//Hide google map controls
+.gm-style div a div img{
+    display: none;
+}
+
+.gmnoprint a, .gmnoprint span {
+    display: none;
+}
+
+.gmnoprint div {
+    background: none !important;
+}

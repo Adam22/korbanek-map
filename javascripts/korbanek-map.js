@@ -124,35 +124,35 @@ $j(document).ready(function(){
                                 latlng: null,
                                 marker: null,
                             },
-//                        "skrzyszow":
-//                            {
-//                                name: "Firma Usł.-Handl. „W. Marek” Wiesław Marek",
-//                                address: "Skrzyszów 518, 33-156 Skrzyszów",
-//                                latlng: null,                                
-//                                marker: null,
-//                            },
-//
-//                        "swibie":
-//                            {
-//                                name: "„ROL DAM-SERWIS” Damian Świeży",
-//                                address: "Świbie, ul. Sportowa 35, 44-187 Wielowieś",
-//                                latlng: null,
-//                                marker: null,
-//                            },
-//                        "janikowo":
-//                            {
-//                                name: "AGRO-CLASSIC Sławomir Giża Spółka Jawna",
-//                                address: "ul. Wędkarska 2, 88-160 Janikowo",
-//                                latlng: null,                                
-//                                marker: null,
-//                            },
-//                        "goldap":
-//                            {
-//                                name: "ROL-MASZ Serwis Naprawa Grzegorz Brzozowski",
-//                                address: "ul. Warszawska 8a, 19-500 Gołdap",
-//                                latlng: null,
-//                                marker: null,
-//                            },
+                        "skrzyszow":
+                            {
+                                name: "Firma Usł.-Handl. „W. Marek” Wiesław Marek",
+                                address: "Skrzyszów 518, 33-156 Skrzyszów",
+                                latlng: null,                                
+                                marker: null,
+                            },
+
+                        "swibie":
+                            {
+                                name: "„ROL DAM-SERWIS” Damian Świeży",
+                                address: "Świbie, ul. Sportowa 35, 44-187 Wielowieś",
+                                latlng: null,
+                                marker: null,
+                            },
+                        "janikowo":
+                            {
+                                name: "AGRO-CLASSIC Sławomir Giża Spółka Jawna",
+                                address: "ul. Wędkarska 2, 88-160 Janikowo",
+                                latlng: null,                                
+                                marker: null,
+                            },
+                        "goldap":
+                            {
+                                name: "ROL-MASZ Serwis Naprawa Grzegorz Brzozowski",
+                                address: "ul. Warszawska 8a, 19-500 Gołdap",
+                                latlng: null,
+                                marker: null,
+                            },
                     },                
                 
 // Distance Matrix variables
@@ -177,6 +177,12 @@ $j(document).ready(function(){
                             
                         }
                     }
+                },
+                
+                putCentralMarker: function(){
+                    korbanekMap.geocodeAddress(this.markerSet.central.address, function(latlng){
+                        korbanekMap.putMarker(latlng, korbanekMap.map);
+                    })
                 },
                 
                 populateLatLng: function(){
@@ -244,7 +250,7 @@ $j(document).ready(function(){
                                 korbanekMap.putMarker(latlng, korbanekMap.map);                                
                             });
                     });
-                    this.iterateMarkerSet(this.markerSet);
+                    this.putCentralMarker();
 		},                                                
 	},        
 	google.maps.event.addDomListener(window, "load", korbanekMap.initialize());
