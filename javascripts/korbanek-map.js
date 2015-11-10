@@ -159,6 +159,12 @@ $j(document).ready(function(){
 
                 distanceService: null,
                 stack: [],
+                centralMarkerImg:{
+                    url: 'images/marker-central.png',
+                    size: new google.maps.Size(19,31),
+                    origin: new google.maps.Point(0,0),
+                    anchor: new google.maps.Point(9,31),
+                },
                 
                 iterateMarkerSet: function(markerSet){                    
                     for (var property in markerSet){
@@ -211,7 +217,8 @@ $j(document).ready(function(){
                         zoom: this.myZoom,
                         mapTypeId: google.maps.MapTypeId.ROADMAP,
                         scrollwheel: false,
-                        center: this.mapLatlng
+                        center: this.mapLatlng,
+                        disableDefaultUI: true
                     };
                     this.map = new google.maps.Map(document.getElementById("map"),mapOptions);
                     google.maps.event.addDomListener(window, "resize", function() {
@@ -222,6 +229,7 @@ $j(document).ready(function(){
                 putMarker: function(position,map) {
                     return new google.maps.Marker({
                         map: map,
+                        icon: this.centralMarkerImg,
                         animation: google.maps.Animation.DROP,
                         position: position,
                         title: 'korbanek-map'
