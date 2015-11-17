@@ -89,41 +89,41 @@ $j(document).ready(function(){
                                 latlng: null,                                
                                 marker: null,
                             },
-                        "kraniewo":
-                            {
-                                name: "Wójcik & Grabowski Sp. z o.o.",
-                                address: "ul. Makowska 48, 06-425 Karniewo",
-                                latlng: null,                                
-                                marker: null,
-                            },
-                        "zapalow":
-                            {
-                                name: "Firma Usł.-Handl. Drobny Sławomi",
-                                address: "Zapałów 170, 37-544 Zapałów",
-                                latlng: null,                               
-                                marker: null,
-                            },
-                        "lomza":
-                            {
-                                name: "Rogowski Robert Maszyny Rolnicze",
-                                address: "ul. Magazynowa 7, 18-400 Łomża  ",
-                                latlng: null,
-                                marker: null,
-                            },
-                        "goniadz":
-                            {
-                                name: "VOLTRANS Sp. Jawna Usługi Handl.-Transp. Uścinowicz Piotr, Horczak Adam",
-                                address: "ul. Wojska Polskiego 70, 19-110 Goniądz",
-                                latlng: null,
-                                marker: null,
-                            },
-                        "lipiny":
-                            {
-                                name: "AGRO LIPINY Zdzisław Sołdon",
-                                address: "Lipiny 66, 92-701 Łódź",
-                                latlng: null,
-                                marker: null,
-                            },
+//                        "kraniewo":
+//                            {
+//                                name: "Wójcik & Grabowski Sp. z o.o.",
+//                                address: "ul. Makowska 48, 06-425 Karniewo",
+//                                latlng: null,                                
+//                                marker: null,
+//                            },
+//                        "zapalow":
+//                            {
+//                                name: "Firma Usł.-Handl. Drobny Sławomi",
+//                                address: "Zapałów 170, 37-544 Zapałów",
+//                                latlng: null,                               
+//                                marker: null,
+//                            },
+//                        "lomza":
+//                            {
+//                                name: "Rogowski Robert Maszyny Rolnicze",
+//                                address: "ul. Magazynowa 7, 18-400 Łomża  ",
+//                                latlng: null,
+//                                marker: null,
+//                            },
+//                        "goniadz":
+//                            {
+//                                name: "VOLTRANS Sp. Jawna Usługi Handl.-Transp. Uścinowicz Piotr, Horczak Adam",
+//                                address: "ul. Wojska Polskiego 70, 19-110 Goniądz",
+//                                latlng: null,
+//                                marker: null,
+//                            },
+//                        "lipiny":
+//                            {
+//                                name: "AGRO LIPINY Zdzisław Sołdon",
+//                                address: "Lipiny 66, 92-701 Łódź",
+//                                latlng: null,
+//                                marker: null,
+//                            },
 //                        "skrzyszow":
 //                            {
 //                                name: "Firma Usł.-Handl. „W. Marek” Wiesław Marek",
@@ -168,24 +168,43 @@ $j(document).ready(function(){
                 
                 iterateMarkerSet: function(markerSet){                    
                     for (var property in markerSet){
-                        if(markerSet.hasOwnProperty(property)){
-                            korbanekMap.geocodeAddress(markerSet[property].address, function(latlng){
-                                markerSet[property].marker = korbanekMap.putMarker(latlng, korbanekMap.map);
-                                markerSet[property].latlng = markerSet[property].marker.getPosition().toString()
-                                console.log(markerSet[property].marker.getPosition().toString());
-                            });                            
-                            
+                        setTimeout(function(){
+                            if(markerSet.hasOwnProperty(property)){                            
+                                korbanekMap.geocodeAddress(markerSet[property].address, function(latlng){
+                                    markerSet[property].marker = korbanekMap.putMarker(latlng, korbanekMap.map, korbanekMap.centralMarkerImg);
+                                    markerSet[property].latlng = markerSet[property].marker.getPosition().toString();
+                                    console.log(markerSet[property].latlng);
+                                    //console.log(markerSet[property].address);
+                                    //korbanekMap.populateLatLng(markerSet);
+                                });
+                            }
+                        },100);
+                    }
+                },         
+                
+                createMarkerGrid: function(){
+                    //console.log(korbanekMap.markerSet[0]);
+                },
+                
+                mapObjectToArray: function(object){
+                    var mappedArray = [];
+                    var i = 0;
+                    for(var key in object){
+                        mappedArray.push(object[key].name);
+                        mappedArray[object[key][i]] = object[key].address;
+                        //console.log(object[key].name);
+                        i++;
+                    }
+                    return mappedArray;
+                },
+                
+                iterateArray: function(array){
+                    for(var i = 0; i < array.length; i++){
+                        for(var j = 0; j < array.length; j++){
+                        console.log(array[i][0]);
                         }
                     }
                 },
-                
-                populateLatLng: function(){
-                    $j('dealer').each(function(){
-                        //$j(this).data('latlng', )
-                    });
-                },
-                
-                createMarkerGrid: function(){},
                 
                 geocodeInputAddress: function(callback) {
                     this.address = document.getElementById('address').value;                    
@@ -199,7 +218,7 @@ $j(document).ready(function(){
                         if(status === google.maps.GeocoderStatus.OK){
                                 latlng  = results[0].geometry.location;                               
                         }else{
-                                alert("Geocode was not successful:" + status);
+                                console.log("Geocode was not successful:" + status);
                         }
                         if (typeof callback !== 'function') {
                             callback = false;
@@ -226,10 +245,10 @@ $j(document).ready(function(){
                     });
                 },
 
-                putMarker: function(position,map) {
+                putMarker: function(position, map, icon) {
                     return new google.maps.Marker({
                         map: map,
-                        icon: this.centralMarkerImg,
+                        icon: icon,
                         animation: google.maps.Animation.DROP,
                         position: position,
                         title: 'korbanek-map'
@@ -241,10 +260,14 @@ $j(document).ready(function(){
                     this.geocoder = new google.maps.Geocoder();
                     document.getElementById('submit').addEventListener('click', function(){
                             korbanekMap.geocodeInputAddress(function(latlng){
-                                korbanekMap.putMarker(latlng, korbanekMap.map);                                
+                                korbanekMap.putMarker(latlng, korbanekMap.map, korbanekMap.centralMarkerImg);                                
                             });
                     });
-                    this.iterateMarkerSet(this.markerSet);
+                    //this.iterateMarkerSet(this.markerSet);
+                    //this.createMarkerGrid();
+                    //this.mapObjectToArray(this.markerSet);
+                    this.iterateMarkerSet(this.markerSet)
+                    //this.iterateArray(this.mapObjectToArray(this.markerSet));
 		},                                                
 	},        
 	google.maps.event.addDomListener(window, "load", korbanekMap.initialize());
