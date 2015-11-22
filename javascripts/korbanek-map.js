@@ -34,6 +34,10 @@ $j(document).ready(function(){
                     anchor: new google.maps.Point(9,31),
                 },                             
                 
+                parseDataFromHTML: function(){
+                    
+                },
+                
                 createMarkerGrid: function(from){
                     $j(from).each(function(){
                         var markerPosition = new google.maps.LatLng({lat: $j(this).data('lat'), lng: $j(this).data('lng')});
@@ -78,26 +82,29 @@ $j(document).ready(function(){
                         avoidHighways: false,
                         avoidTolls: false                        
                     }, function(response, status){
-                        if (status === google.maps.DistanceMatrixStatus.OK) {
-                            var origins = response.originAddresses;
-                            var destinations = response.destinationAddresses;
-                            var minDistance = Infinity;
-                            var nearestAddress;
-                            for (var i = 0; i < origins.length; i++) {
-                              var results = response.rows[i].elements;
-                              for (var j = 0; j < results.length; j++) {
-                                var element = results[j];                                
-                                var to = destinations[j];
-                                if (minDistance > element.distance.value){
-                                    minDistance = element.distance.value;
-                                    nearestAddress = to;
+                    if (status == google.maps.DistanceMatrixStatus.OK) {
+                        var origins = response.originAddresses;
+                        var destinations = response.destinationAddresses;
+                        var minDistance = Infinity;
+                        var nearestAddress;
+                        var from;
+                        for (var i = 0; i < origins.length; i++) {
+                            var results = response.rows[i].elements;
+                                for (var j = 0; j < results.length; j++) {
+                                    var element = results[j];                                    
+                                    from = origins[i];
+                                    var to = destinations[j];
+                                    if (minDistance > element.distance.value){
+                                        minDistance = element.distance.value;
+                                        nearestAddress = to;
+                                        console.log(nearestAddress);
+                                    }
                                 }
-                              }
-                            }
-                            console.log(nearestAddress);
-                            //korbanekMap.removeMarkers(korbanekMap.markerSet);
-                            //korbanekMap.markerSet.push(korbanekMap.putMarker());
-                          }
+                        }
+                        korbanekMap.removeMarkers(korbanekMap.markerSet);
+                        korbanekMap.geocodeAddress(from, korbanekMap.putMarker());
+                        korbanekMap.geocodeAddress(nearestAddress, korbanekMap.putMarker());
+                    }
                     });
                 },
                 
