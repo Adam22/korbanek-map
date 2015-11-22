@@ -8,7 +8,7 @@ $j(document).ready(function(){
 		myZoom: null,
 		marker: null,
 		map: null,
-		infowindow: null,
+		infoWindow: null,
 		contentString: null,
                 mapType: {
                     CLEAR: 'CLEAR',
@@ -32,12 +32,27 @@ $j(document).ready(function(){
                     size: new google.maps.Size(19,31),
                     origin: new google.maps.Point(0,0),
                     anchor: new google.maps.Point(9,31),
-                },                             
-                
-                parseDataFromHTML: function(){
-                    
                 },
                 
+                openInfowWIndow: function(marker, lat, lng){
+                    var content = this.parseDataFromHTML('.dealer', lat, lng);
+                    console.log(content);
+                    this.infoWindow = new google.maps.InfoWindow({
+                        content: content
+                    });
+                    this.infoWindow.open(korbanekMap.map, marker)
+                },
+                
+                //<div class="dealer central" data-lat="52.458764" data-lng="16.646641000000045">
+                parseDataFromHTML: function(from, lat, lng){
+                    var selector = from+'[data-lat="' + lat + '"][data-lng="' + lng + '"]';
+                    var content;
+                    $j(selector).each(function(){
+                        content = $j(this).text();
+                    });
+                    return content;
+                },
+
                 createMarkerGrid: function(from){
                     $j(from).each(function(){
                         var markerPosition = new google.maps.LatLng({lat: $j(this).data('lat'), lng: $j(this).data('lng')});
@@ -45,7 +60,7 @@ $j(document).ready(function(){
                         korbanekMap.markerSet.push(korbanekMap.putMarker(markerPosition, korbanekMap.map));
                     });
                 },
-                               
+          
                 geocodeInputAddress: function(callback){
                     this.address = document.getElementById('address').value;                    
                     this.geocodeAddress(this.address, callback);
@@ -102,8 +117,15 @@ $j(document).ready(function(){
                                 }
                         }
                         korbanekMap.removeMarkers(korbanekMap.markerSet);
-                        korbanekMap.geocodeAddress(from, korbanekMap.putMarker());
-                        korbanekMap.geocodeAddress(nearestAddress, korbanekMap.putMarker());
+                        korbanekMap.geocodeAddress(from, function(latlng){
+                            korbanekMap.markerSet.push(korbanekMap.putMarker(latlng, korbanekMap.map))
+                        });
+                        korbanekMap.geocodeAddress(nearestAddress, function(latlng){
+                            var marker = korbanekMap.putMarker(latlng, korbanekMap.map);
+                            korbanekMap.openInfowWIndow(marker, marker.getPosition().lat().toString(), marker.getPosition().lng().toString());
+                            korbanekMap.markerSet.push(marker);
+                            console.log(marker.getPosition().lat().toString());
+                        });
                     }
                     });
                 },
@@ -141,8 +163,7 @@ $j(document).ready(function(){
                     markerSet = [];
                 },
                 
-		initialize: function(mapType) {
-                    this.createMap({lat: 52.265472, lng: 19.305168});
+                createMarkerGridForType: function(mapType){
                     switch (mapType){
                         case 'ALL':
                             this.createMarkerGrid('.dealer');
@@ -150,14 +171,22 @@ $j(document).ready(function(){
                         case 'CENTRAL':
                             this.createMarkerGrid('.central');
                             break;
-                    }                   
+                    };
+                },
+                
+		initialize: function(){
+                    this.createMap({lat: 52.265472, lng: 19.305168});
+                    this.createMarkerGridForType(this.mapType.ALL);
                     this.geocoder = new google.maps.Geocoder();
                     this.distanceService = new google.maps.DistanceMatrixService();
                     document.getElementById('submit').addEventListener('click', function(){
                         korbanekMap.calculateDistance(korbanekMap.distanceService, korbanekMap.getOrigin(), korbanekMap.destinationSet);
                     });
-                    
+                    document.getElementById('reset-map').addEventListener('click', function(){
+                        this.removeMarkers(this.markerSet);
+                        this.createMarkerGridForType(this.mapType.ALL);
+                    });
 		},                                                
 	},        
-	google.maps.event.addDomListener(window, "load", korbanekMap.initialize(korbanekMap.mapType.ALL));
+	google.maps.event.addDomListener(window, "load", korbanekMap.initialize());
 });
