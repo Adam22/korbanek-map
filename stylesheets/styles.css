@@ -8779,8 +8779,8 @@ button.close {
 .map-container {
   position: relative;
   overflow: hidden;
-  margin-left: 16.66667%;
-  margin-right: 16.66667%;
+  /*    margin-left: 16.66667%;
+      margin-right: 16.66667%;*/
 }
 
 /* line 13, ../sass/styles.scss */

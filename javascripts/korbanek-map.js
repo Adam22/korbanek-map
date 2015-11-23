@@ -3,53 +3,85 @@ $j(document).ready(function(){
 
 //Map Variables
 	 korbanekMap = {
-		myLatlng: [],
-		mapLatlng: [],
-		myZoom: null,
-		marker: null,
 		map: null,
-		infoWindow: null,
-		contentString: null,
                 mapType: {
                     CLEAR: 'CLEAR',
                     ALL: 'ALL',
                     CENTRAL: 'CENTRAL',
                 },
                 
+                defaultConfig: {
+                    centralMarker:{
+                        url: 'images/marker-central.png',
+                        size: new google.maps.Size(19,31),
+                        origin: new google.maps.Point(0,0),
+                        anchor: new google.maps.Point(9,31),
+                    },
+                    mapPosition: {
+                        lat: 52.265472, 
+                        lng: 19.305168
+                    },                  
+                    mapZoom: 8,
+                },                   
 //Geocoder Variables
-
 		geocoder: null,
                 bounds: null,
 		address: null,
                 markerSet: [],
-                destinationSet: [],
-                                   
+                destinationSet: [],                                  
 // Distance Matrix variables
-
                 distanceService: null,
-                centralMarkerImg:{
-                    url: 'images/marker-central.png',
-                    size: new google.maps.Size(19,31),
-                    origin: new google.maps.Point(0,0),
-                    anchor: new google.maps.Point(9,31),
+                
+                setupMap: function(position){
+                    korbanekMap.geocoder = new google.maps.Geocoder();
+                    korbanekMap.distanceService = new google.maps.DistanceMatrixService();
+                    if (position){
+                        if(screen.width > 769){
+                            korbanekMap.createMap(position);
+                            korbanekMap.createMarkerGridForType(korbanekMap.mapType.ALL);
+                        }else{
+                            korbanekMap.createMap(position);
+                            korbanekMap.calculateDistance(korbanekMap.distanceService, position, korbanekMap.destinationSet);                            
+                        }
+                    }else{
+                        korbanekMap.createMap(korbanekMap.defaultConfig.mapPosition);
+                    }
+                    korbanekMap.createMarkerGridForType(korbanekMap.mapType.ALL);
+                    document.getElementById('submit').addEventListener('click', function(){
+                        korbanekMap.calculateDistance(korbanekMap.distanceService, korbanekMap.getOrigin(), korbanekMap.destinationSet);
+                    });
+                    document.getElementById('reset-map').addEventListener('click', function(){
+                        korbanekMap.removeMarkers(korbanekMap.markerSet);
+                        korbanekMap.createMarkerGridForType(korbanekMap.mapType.ALL);
+                    });                    
+                },
+                
+                setupStartingLatLng: function(){                    
+                    if (Modernizr.geolocation && navigator.geolocation){
+                        navigator.geolocation.getCurrentPosition(function (position) {
+                            var pos = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            }
+                            korbanekMap.setupMap(pos)
+                        });                                                
+                    } else {
+                        korbanekMap.setupMap();
+                    }          
                 },
                 
                 openInfowWIndow: function(marker, lat, lng){
                     var content = this.parseDataFromHTML('.dealer', lat, lng);
-                    console.log(content);
                     this.infoWindow = new google.maps.InfoWindow({
                         content: content
                     });
                     this.infoWindow.open(korbanekMap.map, marker)
                 },
                 
-                //<div class="dealer central" data-lat="52.458764" data-lng="16.646641000000045">
                 parseDataFromHTML: function(from, lat, lng){
                     var selector = from+'[data-lat="' + lat + '"][data-lng="' + lng + '"]';
-                    var content;
-                    $j(selector).each(function(){
-                        content = $j(this).text();
-                    });
+                    var content;                    
+                    content = $j(selector).text();                    
                     return content;
                 },
 
@@ -97,44 +129,63 @@ $j(document).ready(function(){
                         avoidHighways: false,
                         avoidTolls: false                        
                     }, function(response, status){
-                    if (status == google.maps.DistanceMatrixStatus.OK) {
-                        var origins = response.originAddresses;
-                        var destinations = response.destinationAddresses;
-                        var minDistance = Infinity;
-                        var nearestAddress;
-                        var from;
-                        for (var i = 0; i < origins.length; i++) {
-                            var results = response.rows[i].elements;
-                                for (var j = 0; j < results.length; j++) {
-                                    var element = results[j];                                    
-                                    from = origins[i];
-                                    var to = destinations[j];
-                                    if (minDistance > element.distance.value){
-                                        minDistance = element.distance.value;
-                                        nearestAddress = to;
-                                        console.log(nearestAddress);
+                        if (status == google.maps.DistanceMatrixStatus.OK) {
+                            var origins = response.originAddresses;
+                            var destinations = response.destinationAddresses;
+                            var minDistance = Infinity;
+                            var nearestAddress;
+                            var from;
+                            for (var i = 0; i < origins.length; i++) {
+                                var results = response.rows[i].elements;
+                                    for (var j = 0; j < results.length; j++) {
+                                        var element = results[j];                                    
+                                        from = origins[i];
+                                        var to = destinations[j];
+                                        if (minDistance > element.distance.value){
+                                            minDistance = element.distance.value;
+                                            nearestAddress = to;
+                                        }
                                     }
-                                }
+                            }
+                            korbanekMap.setNearestMarker(nearestAddress, from);
                         }
-                        korbanekMap.removeMarkers(korbanekMap.markerSet);
-                        korbanekMap.geocodeAddress(from, function(latlng){
-                            korbanekMap.markerSet.push(korbanekMap.putMarker(latlng, korbanekMap.map))
-                        });
-                        korbanekMap.geocodeAddress(nearestAddress, function(latlng){
-                            var marker = korbanekMap.putMarker(latlng, korbanekMap.map);
-                            korbanekMap.openInfowWIndow(marker, marker.getPosition().lat().toString(), marker.getPosition().lng().toString());
-                            korbanekMap.markerSet.push(marker);
-                            console.log(marker.getPosition().lat().toString());
-                        });
-                    }
                     });
                 },
                 
+                setNearestMarker: function(nearestAddress, from){
+                        korbanekMap.removeMarkers(korbanekMap.markerSet);
+                        korbanekMap.markerSet = [];
+                        var marker;
+                        korbanekMap.geocodeAddress(nearestAddress, function(latlng){
+                            marker = korbanekMap.putMarker(latlng, korbanekMap.map);
+                            marker.addListener('click', function(){
+                                korbanekMap.openInfowWIndow(marker, marker.getPosition().lat().toString(), marker.getPosition().lng().toString());
+                            });
+                            korbanekMap.markerSet.push(marker);
+                            marker = null;
+                        });
+                        korbanekMap.geocodeAddress(from, function(latlng){
+                            marker = korbanekMap.putMarker(latlng, null);
+                            korbanekMap.markerSet.push(marker);
+                            korbanekMap.setBounds(korbanekMap.markerSet);
+                        });
+                },
+                
+                setBounds: function(markerSet){
+                    var bounds = new google.maps.LatLngBounds();
+                    for(var i = 0; i < markerSet.length; i++) {
+                        bounds.extend(markerSet[i].getPosition());
+                        console.log(markerSet[i].getPosition().toString());
+                    }
+                    korbanekMap.map.setCenter(bounds.getCenter());                    
+                    korbanekMap.map.fitBounds(bounds);
+                    korbanekMap.map.setZoom(korbanekMap.map.getZoom()-1); 
+                },
+                
                 createMap: function(position) {
-                    this.mapLatlng = new google.maps.LatLng(position);
-                    this.myZoom = 6;
+                    this.mapLatlng = new google.maps.LatLng(position);                    
                     var mapOptions = {
-                        zoom: this.myZoom,
+                        zoom: korbanekMap.defaultConfig.mapZoom,
                         mapTypeId: google.maps.MapTypeId.ROADMAP,
                         scrollwheel: false,
                         center: this.mapLatlng,
@@ -149,7 +200,7 @@ $j(document).ready(function(){
                 putMarker: function(position,map) {
                     return new google.maps.Marker({
                         map: map,
-                        icon: this.centralMarkerImg,
+                        icon: this.defaultConfig.centralMarker,
                         animation: google.maps.Animation.DROP,
                         position: position,
                         title: 'korbanek-map'
@@ -160,7 +211,6 @@ $j(document).ready(function(){
                     for (var i = 0; i < markerSet.length; i++){
                         markerSet[i].setMap(null);
                     }
-                    markerSet = [];
                 },
                 
                 createMarkerGridForType: function(mapType){
@@ -171,21 +221,13 @@ $j(document).ready(function(){
                         case 'CENTRAL':
                             this.createMarkerGrid('.central');
                             break;
+                        case 'CLEAR':
+                            break;
                     };
                 },
                 
 		initialize: function(){
-                    this.createMap({lat: 52.265472, lng: 19.305168});
-                    this.createMarkerGridForType(this.mapType.ALL);
-                    this.geocoder = new google.maps.Geocoder();
-                    this.distanceService = new google.maps.DistanceMatrixService();
-                    document.getElementById('submit').addEventListener('click', function(){
-                        korbanekMap.calculateDistance(korbanekMap.distanceService, korbanekMap.getOrigin(), korbanekMap.destinationSet);
-                    });
-                    document.getElementById('reset-map').addEventListener('click', function(){
-                        this.removeMarkers(this.markerSet);
-                        this.createMarkerGridForType(this.mapType.ALL);
-                    });
+                    this.setupStartingLatLng();                    
 		},                                                
 	},        
 	google.maps.event.addDomListener(window, "load", korbanekMap.initialize());
