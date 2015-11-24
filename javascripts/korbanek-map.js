@@ -41,12 +41,11 @@ $j(document).ready(function(){
                             korbanekMap.createMarkerGridForType(korbanekMap.mapType.ALL);
                         }else{
                             korbanekMap.createMap(position);
-                            korbanekMap.calculateDistance(korbanekMap.distanceService, position, korbanekMap.destinationSet);                            
+                            korbanekMap.calculateDistance(korbanekMap.distanceService, new google.maps.LatLng(position), korbanekMap.destinationSet);                            
                         }
                     }else{
                         korbanekMap.createMap(korbanekMap.defaultConfig.mapPosition);
                     }
-                    korbanekMap.createMarkerGridForType(korbanekMap.mapType.ALL);
                     document.getElementById('submit').addEventListener('click', function(){
                         korbanekMap.calculateDistance(korbanekMap.distanceService, korbanekMap.getOrigin(), korbanekMap.destinationSet);
                     });
