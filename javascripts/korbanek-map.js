@@ -20,10 +20,17 @@ $j(document).ready(function(){
                     mapPosition: {
                         lat: 52.265472, 
                         lng: 19.305168
-                    },                  
+                    },
+                    navigatorOptions: {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    },                
+                    
                     mapZoom: 8,
                     mobileZoom: 12,
-                },                   
+                },
+                                
 //Geocoder Variables
 		geocoder: null,
                 bounds: null,
@@ -32,53 +39,24 @@ $j(document).ready(function(){
                 destinationSet: [],                                  
 // Distance Matrix variables
                 distanceService: null,
-                
-                setupMap: function(position){
-                    this.geocoder = new google.maps.Geocoder();
-                    this.distanceService = new google.maps.DistanceMatrixService();
-                    if (position){
-                        if(screen.width > 769){
-                            this.createMap(position, this.defaultConfig.mapZoom);
-                            this.createMarkerGridForType(korbanekMap.mapType.ALL);
-                        }else{
-                            this.createMap(position, this.defaultConfig.mobileZoom);
-                            this.createMarkerGrid('.dealer', null)
-                            this.calculateDistance(korbanekMap.distanceService, new google.maps.LatLng(position), korbanekMap.destinationSet);                            
-                        }
-                    }else{
-                        korbanekMap.createMap(korbanekMap.defaultConfig.mapPosition);
-                    }
-                    document.getElementById('submit').addEventListener('click', function(){
-                        korbanekMap.calculateDistance(korbanekMap.distanceService, korbanekMap.getOrigin(), korbanekMap.destinationSet);
+
+                putMarker: function(position,map) {
+                    return new google.maps.Marker({
+                        map: map,
+                        icon: this.defaultConfig.centralMarker,
+                        animation: google.maps.Animation.DROP,
+                        position: position,
+                        title: 'korbanek-map'
                     });
-                    document.getElementById('reset-map').addEventListener('click', function(){
-                        korbanekMap.removeMarkers(korbanekMap.markerSet);
-                        korbanekMap.markerSet = [];
-                        korbanekMap.createMarkerGridForType(korbanekMap.mapType.ALL);
-                    });                    
                 },
                 
-                options: {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
-                },                              
-                
-                setupStartingLatLng: function(){                          
-                    if (navigator.geolocation){
-                        navigator.geolocation.getCurrentPosition(function(position){
-                            var pos = {
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                            }
-                            korbanekMap.setupMap(pos)                            
-                        }, function(err){
-                            console.warn('ERROR(' + err.code + '): ' + err.message);
-                            korbanekMap.setupMap(korbanekMap.defaultConfig.mapPosition);
-                        }, this.options);                                                
-                    }                    
-                },
-                
+                removeMarkers: function(markerSet){
+                    for (var i = 0; i < markerSet.length; i++){
+                        markerSet[i].setMap(null);
+                    }
+                    markerSet = [];
+                },        
+                        
                 openInfowWIndow: function(marker, lat, lng){
                     var content = this.parseDataFromHTML('.dealer', lat, lng);
                     this.infoWindow = new google.maps.InfoWindow({
@@ -92,14 +70,6 @@ $j(document).ready(function(){
                     var content;                    
                     content = $j(selector).text();                    
                     return content;
-                },
-
-                createMarkerGrid: function(from, map){
-                    $j(from).each(function(){
-                        var markerPosition = new google.maps.LatLng({lat: $j(this).data('lat'), lng: $j(this).data('lng')});
-                        korbanekMap.destinationSet.push($j(this).find('.address').text());
-                        korbanekMap.markerSet.push(korbanekMap.putMarker(markerPosition, map));
-                    });
                 },
           
                 geocodeInputAddress: function(callback){
@@ -128,7 +98,15 @@ $j(document).ready(function(){
                         }
                     });                    
                 },
-                
+
+                createMarkerGrid: function(from, map){
+                    $j(from).each(function(){
+                        var markerPosition = new google.maps.LatLng({lat: $j(this).data('lat'), lng: $j(this).data('lng')});
+                        korbanekMap.destinationSet.push($j(this).find('.address').text());
+                        korbanekMap.markerSet.push(korbanekMap.putMarker(markerPosition, map));
+                    });
+                },
+        
                 calculateDistance: function(distanceMatrixService, origin, destinationSet){
                     distanceMatrixService.getDistanceMatrix({
                         origins: [origin],
@@ -186,56 +164,68 @@ $j(document).ready(function(){
                         bounds.extend(markerSet[i].getPosition());
                         console.log(markerSet[i].getPosition().toString());
                     }
-                    korbanekMap.map.setCenter(bounds.getCenter());                    
-                    korbanekMap.map.fitBounds(bounds);
-                    korbanekMap.map.setZoom(korbanekMap.map.getZoom()-1); 
+                    this.map.setCenter(bounds.getCenter());                    
+                    this.map.fitBounds(bounds);
+                    this.map.setZoom(korbanekMap.map.getZoom()-1); 
                 },
                 
                 createMap: function(position, zoom) {
-                    this.mapLatlng = new google.maps.LatLng(position);                    
+                    var mapLatlng = new google.maps.LatLng(position);                    
                     var mapOptions = {
                         zoom: zoom,
                         mapTypeId: google.maps.MapTypeId.ROADMAP,
                         scrollwheel: false,
-                        center: this.mapLatlng,
+                        center: mapLatlng,
                         disableDefaultUI: true
                     };
                     this.map = new google.maps.Map(document.getElementById("map"),mapOptions);
                     google.maps.event.addDomListener(window, "resize", function() {
-                        korbanekMap.map.setCenter(korbanekMap.mapLatlng);
+                        korbanekMap.map.setCenter(mapLatlng);
                     });
                 },
 
-                putMarker: function(position,map) {
-                    return new google.maps.Marker({
-                        map: map,
-                        icon: this.defaultConfig.centralMarker,
-                        animation: google.maps.Animation.DROP,
-                        position: position,
-                        title: 'korbanek-map'
-                    });
-                },
-                
-                removeMarkers: function(markerSet){
-                    for (var i = 0; i < markerSet.length; i++){
-                        markerSet[i].setMap(null);
-                    }
-                    markerSet = [];
-                },
-                
-                createMarkerGridForType: function(mapType){
-                    switch (mapType){
-                        case 'ALL':
+                setupMap: function(position){
+                    this.geocoder = new google.maps.Geocoder();
+                    this.distanceService = new google.maps.DistanceMatrixService();
+                    if (position){
+                        if(screen.width > 769){
+                            this.createMap(position, this.defaultConfig.mapZoom);
                             this.createMarkerGrid('.dealer', this.map);
-                            break;
-                        case 'CENTRAL':
-                            this.createMarkerGrid('.central', this.map);
-                            break;
-                        case 'CLEAR':
-                            break;
-                    };
+                        }else{
+                            this.createMap(position, this.defaultConfig.mobileZoom);
+                            this.createMarkerGrid('.dealer', null)
+                            this.calculateDistance(this.distanceService, new google.maps.LatLng(position), this.destinationSet);                            
+                        }
+                    }else{
+                        this.createMap(this.defaultConfig.mapPosition, this.defaultConfig.mapZoom);
+                    }
+                    document.getElementById('submit').addEventListener('click', function(){
+                        korbanekMap.calculateDistance(korbanekMap.distanceService, korbanekMap.getOrigin(), korbanekMap.destinationSet);
+                    });
+                    document.getElementById('reset-map').addEventListener('click', function(){
+                        korbanekMap.removeMarkers(korbanekMap.markerSet);
+                        korbanekMap.markerSet = [];
+                        korbanekMap.destinationSet = [];
+                        korbanekMap.createMarkerGrid('.dealer', korbanekMap.map)
+                        korbanekMap.map.setCenter(7);
+                    });                    
                 },
-                
+                                
+                setupStartingLatLng: function(){                          
+                    if (navigator.geolocation){
+                        navigator.geolocation.getCurrentPosition(function(position){
+                            var pos = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            }
+                            korbanekMap.setupMap(pos)                            
+                        }, function(err){
+                            console.warn('ERROR(' + err.code + '): ' + err.message);
+                            korbanekMap.setupMap();
+                        }, korbanekMap.defaultConfig.navigatorOptions);                                                
+                    }
+                },
+                      
 		initialize: function(){
                     this.setupStartingLatLng();                    
 		},                                                
