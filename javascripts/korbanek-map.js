@@ -22,6 +22,7 @@ $j(document).ready(function(){
                         lng: 19.305168
                     },                  
                     mapZoom: 8,
+                    mobileZoom: 12,
                 },                   
 //Geocoder Variables
 		geocoder: null,
@@ -37,10 +38,11 @@ $j(document).ready(function(){
                     this.distanceService = new google.maps.DistanceMatrixService();
                     if (position){
                         if(screen.width > 769){
-                            this.createMap(position);
+                            this.createMap(position, this.defaultConfig.mapZoom);
                             this.createMarkerGridForType(korbanekMap.mapType.ALL);
                         }else{
-                            this.createMap(position);
+                            this.createMap(position, this.defaultConfig.mobileZoom);
+                            this.createMarkerGrid('.dealer', null)
                             this.calculateDistance(korbanekMap.distanceService, new google.maps.LatLng(position), korbanekMap.destinationSet);                            
                         }
                     }else{
@@ -92,11 +94,11 @@ $j(document).ready(function(){
                     return content;
                 },
 
-                createMarkerGrid: function(from){
+                createMarkerGrid: function(from, map){
                     $j(from).each(function(){
                         var markerPosition = new google.maps.LatLng({lat: $j(this).data('lat'), lng: $j(this).data('lng')});
                         korbanekMap.destinationSet.push($j(this).find('.address').text());
-                        korbanekMap.markerSet.push(korbanekMap.putMarker(markerPosition, korbanekMap.map));
+                        korbanekMap.markerSet.push(korbanekMap.putMarker(markerPosition, map));
                     });
                 },
           
@@ -189,10 +191,10 @@ $j(document).ready(function(){
                     korbanekMap.map.setZoom(korbanekMap.map.getZoom()-1); 
                 },
                 
-                createMap: function(position) {
+                createMap: function(position, zoom) {
                     this.mapLatlng = new google.maps.LatLng(position);                    
                     var mapOptions = {
-                        zoom: korbanekMap.defaultConfig.mapZoom,
+                        zoom: zoom,
                         mapTypeId: google.maps.MapTypeId.ROADMAP,
                         scrollwheel: false,
                         center: this.mapLatlng,
@@ -224,10 +226,10 @@ $j(document).ready(function(){
                 createMarkerGridForType: function(mapType){
                     switch (mapType){
                         case 'ALL':
-                            this.createMarkerGrid('.dealer');
+                            this.createMarkerGrid('.dealer', this.map);
                             break;
                         case 'CENTRAL':
-                            this.createMarkerGrid('.central');
+                            this.createMarkerGrid('.central', this.map);
                             break;
                         case 'CLEAR':
                             break;
