@@ -33,15 +33,15 @@ $j(document).ready(function(){
                 distanceService: null,
                 
                 setupMap: function(position){
-                    korbanekMap.geocoder = new google.maps.Geocoder();
-                    korbanekMap.distanceService = new google.maps.DistanceMatrixService();
+                    this.geocoder = new google.maps.Geocoder();
+                    this.distanceService = new google.maps.DistanceMatrixService();
                     if (position){
                         if(screen.width > 769){
-                            korbanekMap.createMap(position);
-                            korbanekMap.createMarkerGridForType(korbanekMap.mapType.ALL);
+                            this.createMap(position);
+                            this.createMarkerGridForType(korbanekMap.mapType.ALL);
                         }else{
-                            korbanekMap.createMap(position);
-                            korbanekMap.calculateDistance(korbanekMap.distanceService, new google.maps.LatLng(position), korbanekMap.destinationSet);                            
+                            this.createMap(position);
+                            this.calculateDistance(korbanekMap.distanceService, new google.maps.LatLng(position), korbanekMap.destinationSet);                            
                         }
                     }else{
                         korbanekMap.createMap(korbanekMap.defaultConfig.mapPosition);
@@ -51,22 +51,30 @@ $j(document).ready(function(){
                     });
                     document.getElementById('reset-map').addEventListener('click', function(){
                         korbanekMap.removeMarkers(korbanekMap.markerSet);
+                        korbanekMap.markerSet = [];
                         korbanekMap.createMarkerGridForType(korbanekMap.mapType.ALL);
                     });                    
                 },
                 
-                setupStartingLatLng: function(){                    
-                    if (Modernizr.geolocation && navigator.geolocation){
-                        navigator.geolocation.getCurrentPosition(function (position) {
+                options: {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                },                              
+                
+                setupStartingLatLng: function(){                          
+                    if (navigator.geolocation){
+                        navigator.geolocation.getCurrentPosition(function(position){
                             var pos = {
                                 lat: position.coords.latitude,
                                 lng: position.coords.longitude
                             }
-                            korbanekMap.setupMap(pos)
-                        });                                                
-                    } else {
-                        korbanekMap.setupMap();
-                    }          
+                            korbanekMap.setupMap(pos)                            
+                        }, function(err){
+                            console.warn('ERROR(' + err.code + '): ' + err.message);
+                            korbanekMap.setupMap(korbanekMap.defaultConfig.mapPosition);
+                        }, this.options);                                                
+                    }                    
                 },
                 
                 openInfowWIndow: function(marker, lat, lng){
@@ -146,14 +154,14 @@ $j(document).ready(function(){
                                         }
                                     }
                             }
+                            korbanekMap.removeMarkers(korbanekMap.markerSet);
+                            korbanekMap.markerSet = [];
                             korbanekMap.setNearestMarker(nearestAddress, from);
                         }
                     });
                 },
                 
-                setNearestMarker: function(nearestAddress, from){
-                        korbanekMap.removeMarkers(korbanekMap.markerSet);
-                        korbanekMap.markerSet = [];
+                setNearestMarker: function(nearestAddress, from){                        
                         var marker;
                         korbanekMap.geocodeAddress(nearestAddress, function(latlng){
                             marker = korbanekMap.putMarker(latlng, korbanekMap.map);
@@ -210,6 +218,7 @@ $j(document).ready(function(){
                     for (var i = 0; i < markerSet.length; i++){
                         markerSet[i].setMap(null);
                     }
+                    markerSet = [];
                 },
                 
                 createMarkerGridForType: function(mapType){
