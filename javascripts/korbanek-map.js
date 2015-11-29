@@ -1,7 +1,10 @@
-var map;
-var destinationSet;
-var markerSet;
-var DefaultConfig = function(){
+$j = jQuery.noConflict();
+$j(document).ready(function(){
+
+    var map;
+    var destinationSet;
+    var markerSet;
+    var DefaultConfig = function(){
         this.centralMarker = {
             url: 'images/marker-central.png',
             size: new google.maps.Size(19,31),
@@ -25,19 +28,20 @@ var DefaultConfig = function(){
             scrollwheel: false,
             disableDefaultUI: true
         };
-};
-$j = jQuery.noConflict();
-$j(document).ready(function(){
-    var config = new DefaultConfig();
-    var map = new KorbanekMap(config.mapOptions, config.mapPosition, config.mapZoom)
-    google.maps.event.addDomListener(window, "load", map);  
-    //KorbanekMap(config.mapOptions, config.mapPosition, config.mapZoom)
-});  
+    };
+
+    
+    var config = new DefaultConfig();    
+    google.maps.event.addDomListener(window, "load", KorbanekMap(config.mapOptions, config.mapPosition, config.mapZoom));  
+
+
+  
 
 function KorbanekMap(options, position, zoom){    
     var self = this;
     var mapCenter = new google.maps.LatLng(position);
-    this.map = google.maps.Map(document.getElementById('map'), options.mapOptions);
+    this.map = new google.maps.Map(document.getElementById('map'), options.mapOptions);
     this.map.setCenter(mapCenter);
     this.map.setZoom(zoom);
 };
+});
