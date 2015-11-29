@@ -4,7 +4,11 @@ $j(document).ready(function(){
     var map;
     var destinationSet;
     var markerSet;
-    var DefaultConfig = function(){
+    function DefaultConfig(){        
+        this.onContainer = 'map';
+        this.mapZoom = 8;
+        this.mobileZoom = 12;
+
         this.centralMarker = {
             url: 'images/marker-central.png',
             size: new google.maps.Size(19,31),
@@ -21,27 +25,46 @@ $j(document).ready(function(){
             maximumAge: 0
         };                
 
-        this.mapZoom = 8,
-        this.mobileZoom = 12,
         this.mapOptions = {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             scrollwheel: false,
             disableDefaultUI: true
         };
+    };          
+
+    function initialize(){        ;
+        if(!Object.create){
+            Object.create = function(o){
+                function F(){};
+                F.prototype = o;
+                return new F();
+            }
+        }
+        KorbanekMap.prototype = Object.create(Map.prototype);
+        KorbanekMap.prototype.constructor = KorbanekMap;
+        var config = new DefaultConfig();
+        var map = new KorbanekMap(config);
+        map.drawMap(map.config);
+        var destinationSet;
+        var markerSet;       
+    }; 
+
+    function Map(config){
+        this.config = config;
     };
 
-    
-    var config = new DefaultConfig();    
-    google.maps.event.addDomListener(window, "load", KorbanekMap(config.mapOptions, config.mapPosition, config.mapZoom));  
+    Map.prototype.drawMap = function (options){
+        var _this = this;                      
+        var mapCenter = new google.maps.LatLng(options.mapPosition);
+        this.map = new google.maps.Map(document.getElementById('map'), options.mapOptions);
+        this.map.setCenter(mapCenter);
+        this.map.setZoom(options.mapZoom);
+        };
 
+    Map.prototype.putMarker = function(){};
 
-  
-
-function KorbanekMap(options, position, zoom){    
-    var self = this;
-    var mapCenter = new google.maps.LatLng(position);
-    this.map = new google.maps.Map(document.getElementById('map'), options.mapOptions);
-    this.map.setCenter(mapCenter);
-    this.map.setZoom(zoom);
-};
+    function KorbanekMap(config){
+        Map.call(this, config);        
+    };
+    google.maps.event.addDomListener(window, "load", initialize);
 });
