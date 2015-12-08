@@ -21,11 +21,16 @@ function MapApplication(){
         self.korbanekMap.markerSet = [];
         self.googleOperator.calculateDistance(self.googleOperator.distanceService, self.googleOperator.getOrigin(), 
             self.korbanekMap.destinationSet, function(to, from){
-                var destination = new google.maps.LatLng({lat: to.lat(), lng: to.lng()});
-                self.korbanekMap.markerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarker, to, self.korbanekMap.map));                
+                var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarker, to, self.korbanekMap.map);
+                marker.addListener('click', function(){
+                   self.googleOperator.setInfoWindow(self.parseHTMLContent(to.lat(), to.lng()));
+                   self.googleOperator.infoWindow.open(self.korbanekMap.map, marker);
+                });
+                self.korbanekMap.markerSet.push(marker); 
+                console.log();
                 self.googleOperator.geocodeAddress(from, function(latlng){
-                   self.korbanekMap.markerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarker, latlng, self.korbanekMap.map));
-                   //self.korbanekMap.setupMarkersOnMap(self.korbanekMap.markerSet, self.korbanekMap.map);                
+                   self.korbanekMap.markerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarker, latlng, null));
+                   self.googleOperator.setBounds(self.korbanekMap);
                 });
             });       
     });
@@ -33,19 +38,20 @@ function MapApplication(){
         self.korbanekMap.config.mapPosition = pos;
         self.korbanekMap.drawMap(self.korbanekMap.config);            
         self.korbanekMap.setupMarkersOnMap(self.korbanekMap.markerSet, self.korbanekMap.map);            
-        self.korbanekMap.map.setZoom(10);
+        self.korbanekMap.map.setZoom(8);
     });
 };
 
-MapApplication.prototype.parseHTMLContent = function(from, lat, lng){
-    var selector = from + '[data-lat="' + lat + '"][data-lng="' + lng + '"]';
+MapApplication.prototype.parseHTMLContent = function(lat, lng){
+    var selector = '[data-lat="' + lat + '"][data-lng="' + lng + '"]';
     var content;                    
-    content = $j(selector).text();                    
+    content = $j(selector).html();                    
     return content;
 };
 
 function GoogleOprator(){
     this.address;
+    this.infoWindow;
     this.geocoder = new google.maps.Geocoder();
     this.distanceService = new google.maps.DistanceMatrixService();
     this.bounds = new google.maps.LatLngBounds();
@@ -85,48 +91,40 @@ GoogleOprator.prototype.calculateDistance = function(distanceMatrixService, orig
             var from;
             for (var i = 0; i < origins.length; i++) {
                 var results = response.rows[i].elements;
-                    for (var j = 0; j < results.length; j++) {
+                    from = origins[i];
+                    for (var j = 0; j < results.length; j++) {                        
                         var element = results[j];                                    
-                        from = origins[i];
-                        var to = destinationSet[j];
-                        if (minDistance > element.distance.value){
+                        if (minDistance > element.distance.value){                            
                             minDistance = element.distance.value;
-                            nearestAddress = to;
+                            nearestAddress =  destinationSet[j];
                         }
                     }
             }
-            console.log(to);
-            callback(to, from);            
+            callback(nearestAddress, from);
         }       
        });
 
 };
-GoogleOprator.prototype.combineNearestPoints = function(from, to, markerSet){
-    
-}
 
 GoogleOprator.prototype.getOrigin = function(){
     this.address = document.getElementById('address').value;
     return this.address;
 };
 
-GoogleOprator.prototype.setBounds = function(){
+GoogleOprator.prototype.setBounds = function(korbanekMap){
     var bounds = new google.maps.LatLngBounds();
     for(var i = 0; i < korbanekMap.markerSet.length; i++) {
         bounds.extend(korbanekMap.markerSet[i].getPosition());                        
     }
     korbanekMap.map.setCenter(bounds.getCenter());                    
     korbanekMap.map.fitBounds(bounds);
-    korbanekMap.map.setZoom(korbanekMap.map.getZoom()-1); 
+    korbanekMap.map.setZoom(korbanekMap.map.getZoom() - 1); 
 };
 
-GoogleOprator.prototype.openInfoWindow = function(){
-    console.log(lat +' '+ lng);
-    var content = korbanekMap.parseDataFromHTML('.dealer', lat, lng);
-    korbanekMap.infoWindow = new google.maps.InfoWindow({
+GoogleOprator.prototype.setInfoWindow = function(content){
+    this.infoWindow = new google.maps.InfoWindow({
         content: content
-    });
-    korbanekMap.infoWindow.open(korbanekMap.map, marker)
+    });    
 };
 
 function Map(config){
@@ -208,8 +206,8 @@ KorbanekMap.prototype.setupMarkersOnMap = function(markerSet, map){
 
 function DefaultConfig(htmlTaret, htmlSource){        
        this.onContainer = htmlTaret;
-       this.mapZoom = 7;
-       this.mobileZoom = 12;
+       this.mapZoom = 5;
+       this.mobileZoom = 7;
        this.sourceClass = htmlSource;
 
        this.centralMarker = {
