@@ -8,17 +8,21 @@
     }
     $jM = jQuery.noConflict();
     $jM(document).ready(function(){                 
-        google.maps.event.addDomListener(window, "load", $jM.fn.setConfig);    
+        google.maps.event.addDomListener(window, "load", init);    
     });  
     
-    $jM.fn.setConfig = function(){
+    function init(){
         $jM('div[data-map-config]').each(function(){
-            if(typeof $jM(this).data('map-config') == 'object'){
-                var options = $jM(this).data('map-config');
-                options['onContainer'] = $jM(this).attr('id');                
-                $jM.fn.createGoogleMap(options);
-            }
+            $jM(this).setConfig().createGoogleMap();
         });
+    };
+    
+    $jM.fn.setConfig = function(){       
+        if(typeof $jM(this).data('map-config') == 'object'){
+            var options = $jM(this).data('map-config');
+            options['onContainer'] = $jM(this).attr('id');
+        }
+        return this;
     };
     
     $jM.fn.createGoogleMap = function(options){
@@ -56,7 +60,7 @@
 
         this.korbanekMap.setupStartingLatLng(function(pos){
             if(pos){
-                self.korbanekMap.map.setZoom(8);
+                //self.korbanekMap.map.setZoom(8);
                 self.korbanekMap.config.mapPosition = pos;            
             }
             self.korbanekMap.drawMap(self.korbanekMap.config);            
@@ -89,6 +93,80 @@
         var content;                    
         content = $jM(selector).html();                    
         return content;
+    };
+
+    function Map(config){
+        this.config = config;
+    };
+
+    Map.prototype.drawMap = function (options){    
+        var mapCenter = new google.maps.LatLng(options.mapPosition);
+        this.map = new google.maps.Map(document.getElementById(options.onContainer), options.mapOptions);
+        google.maps.event.trigger(map,'resize');
+        this.map.setCenter(mapCenter);
+        this.map.setZoom(options.mapZoom);
+    };
+
+    Map.prototype.putMarker = function(icon, position, map){
+        return new google.maps.Marker({
+          map: map,
+          icon: icon,
+          animation: google.maps.Animation.DROP,
+          position: position,
+          title: 'korbanek-map'
+      });
+    };
+
+    Map.prototype.setupStartingLatLng = function (callback){   
+        if (navigator.geolocation){
+            navigator.geolocation.getCurrentPosition(function(position){
+                var pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                if (typeof callback !== 'function') {
+                    callback = false;
+                }
+                else{                            
+                    callback(pos);
+                }
+            }, function(err){
+                console.warn('ERROR(' + err.code + '): ' + err.message);
+                callback();
+            }, navigatorOptions);                                                
+        }
+    };
+
+    function KorbanekMap(config){
+        Map.call(this, config);
+        this.map;
+        this.nearestPionts = [];
+        this.destinationSet = KorbanekMap.prototype.setDestinationSource(config.sourceClass);
+        this.markerSet = KorbanekMap.prototype.createMarkers(config.centralMarker, this.destinationSet, null);
+    };
+
+    KorbanekMap.prototype = Object.create(Map.prototype);
+    KorbanekMap.prototype.constructor = KorbanekMap;
+
+    KorbanekMap.prototype.setDestinationSource = function(from){
+        var destinations = new Array();
+        $jM(from).each(function(){
+            var position = new google.maps.LatLng({lat: $jM(this).data('lat'), lng: $jM(this).data('lng')});
+            destinations.push(position);
+        });
+        return destinations;
+    };
+    KorbanekMap.prototype.createMarkers = function(icon, sourceSet, map){
+        var markers = Array();
+        for(var i = 0; i < sourceSet.length; i++){
+            markers.push(Map.prototype.putMarker(icon, sourceSet[i], map));
+        }
+        return markers;
+    };
+    KorbanekMap.prototype.setupMarkersOnMap = function(markerSet, map){
+        for (var i = 0; i < markerSet.length; i++){
+            markerSet[i].setMap(map);
+        }
     };
 
     function GoogleOprator(){
@@ -167,81 +245,6 @@
         this.infoWindow = new google.maps.InfoWindow({
             content: content
         });    
-    };
-
-    function Map(config){
-        this.config = config;
-        this.map;
-    };
-
-    Map.prototype.drawMap = function (options){    
-        var mapCenter = new google.maps.LatLng(options.mapPosition);
-        this.map = new google.maps.Map(document.getElementById(options.onContainer), options.mapOptions);
-        google.maps.event.trigger(map,'resize');
-        this.map.setCenter(mapCenter);
-        this.map.setZoom(options.mapZoom);
-    };
-
-    Map.prototype.putMarker = function(icon, position, map){
-        return new google.maps.Marker({
-          map: map,
-          icon: icon,
-          animation: google.maps.Animation.DROP,
-          position: position,
-          title: 'korbanek-map'
-      });
-    };
-
-    Map.prototype.setupStartingLatLng = function (callback){   
-        if (navigator.geolocation){
-            navigator.geolocation.getCurrentPosition(function(position){
-                var pos = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                if (typeof callback !== 'function') {
-                    callback = false;
-                }
-                else{                            
-                    callback(pos);
-                }
-            }, function(err){
-                console.warn('ERROR(' + err.code + '): ' + err.message);
-                callback();
-            }, navigatorOptions);                                                
-        }
-    };
-
-    function KorbanekMap(config){
-        Map.call(this, config);
-        this.map;
-        this.nearestPionts = [];
-        this.destinationSet = KorbanekMap.prototype.setDestinationSource(config.sourceClass);
-        this.markerSet = KorbanekMap.prototype.createMarkers(config.centralMarker, this.destinationSet, null);
-    };
-
-    KorbanekMap.prototype = Object.create(Map.prototype);
-    KorbanekMap.prototype.constructor = KorbanekMap;
-
-    KorbanekMap.prototype.setDestinationSource = function(from){
-        var destinations = new Array();
-        $jM(from).each(function(){
-            var position = new google.maps.LatLng({lat: $jM(this).data('lat'), lng: $jM(this).data('lng')});
-            destinations.push(position);
-        });
-        return destinations;
-    };
-    KorbanekMap.prototype.createMarkers = function(icon, sourceSet, map){
-        var markers = Array();
-        for(var i = 0; i < sourceSet.length; i++){
-            markers.push(Map.prototype.putMarker(icon, sourceSet[i], map));
-        }
-        return markers;
-    };
-    KorbanekMap.prototype.setupMarkersOnMap = function(markerSet, map){
-        for (var i = 0; i < markerSet.length; i++){
-            markerSet[i].setMap(map);
-        }
     };
 
     navigatorOptions = {
