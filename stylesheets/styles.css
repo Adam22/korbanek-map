@@ -8775,15 +8775,19 @@ button.close {
   min-height: 800px;
 }
 
-/* line 7, ../sass/styles.scss */
+/* line 6, ../sass/styles.scss */
+.map {
+  width: 100%;
+  min-height: 800px;
+}
+
+/* line 11, ../sass/styles.scss */
 .map-container {
   position: relative;
   overflow: hidden;
-  /*    margin-left: 16.66667%;
-      margin-right: 16.66667%;*/
 }
 
-/* line 13, ../sass/styles.scss */
+/* line 15, ../sass/styles.scss */
 .map-container:before, .map-container:after, .map:before, .map:after {
   position: absolute;
   display: block;
@@ -8792,7 +8796,7 @@ button.close {
   z-index: 5;
 }
 
-/* line 20, ../sass/styles.scss */
+/* line 22, ../sass/styles.scss */
 .map-container:before {
   top: -5px;
   left: 0;
@@ -8800,7 +8804,7 @@ button.close {
   height: 5px;
 }
 
-/* line 26, ../sass/styles.scss */
+/* line 28, ../sass/styles.scss */
 .map-container:after {
   right: -5px;
   top: 0;
@@ -8808,7 +8812,7 @@ button.close {
   width: 5px;
 }
 
-/* line 32, ../sass/styles.scss */
+/* line 34, ../sass/styles.scss */
 .map:before {
   bottom: -5px;
   left: 0;
@@ -8816,7 +8820,7 @@ button.close {
   height: 5px;
 }
 
-/* line 38, ../sass/styles.scss */
+/* line 40, ../sass/styles.scss */
 .map:after {
   left: -5px;
   top: 0;

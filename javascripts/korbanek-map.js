@@ -1,20 +1,55 @@
 (function ( $jM ) {
+    if(!Object.create){
+        Object.create = function(o){
+            function F(){};
+            F.prototype = o;
+            return new F();
+        };
+    }
     $jM = jQuery.noConflict();
-    $jM(document).ready(function(){
-        $jM.fn.createGoogleMap = function(){};
-        var app = new MapApplication();   
-        google.maps.event.addDomListener(window, "load", app);    
+    $jM(document).ready(function(){                 
+        google.maps.event.addDomListener(window, "load", $jM.fn.setConfig);    
     });  
-
-    function MapApplication(){            
-        if(!Object.create){
-            Object.create = function(o){
-                function F(){};
-                F.prototype = o;
-                return new F();
-            };
-        }    
-        this.korbanekMap = new KorbanekMap(new this.defaultConfig());
+    
+    $jM.fn.setConfig = function(){
+        $jM('div[data-map-config]').each(function(){
+            if(typeof $jM(this).data('map-config') == 'object'){
+                var options = $jM(this).data('map-config');
+                options['onContainer'] = $jM(this).attr('id');                
+                $jM.fn.createGoogleMap(options);
+            }
+        });
+    };
+    
+    $jM.fn.createGoogleMap = function(options){
+        var mapOptions = $jM.extend({}, $jM.fn.createGoogleMap.defaults, options);
+        var app = new MapApplication(mapOptions);
+        return this;
+    };
+    
+    $jM.fn.createGoogleMap.defaults = {
+        onContainer: 'map',
+        sourceClass: '.dealer',
+        mapZoom: 7,        
+        centralMarker: {
+            url: 'images/marker-central.png',
+            size: new google.maps.Size(19,31),
+            origin: new google.maps.Point(0,0),
+            anchor: new google.maps.Point(9,31)
+        },
+        mapPosition: {
+            lat: 52.265472, 
+            lng: 19.305168
+        },
+        mapOptions: {
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            scrollwheel: false,
+            disableDefaultUI: true
+        }                    
+    };
+    
+    function MapApplication(config){            
+        this.korbanekMap = new KorbanekMap(config);
         this.googleOperator = new GoogleOprator();    
 
         var self = this;
@@ -54,35 +89,6 @@
         var content;                    
         content = $jM(selector).html();                    
         return content;
-    };
-
-    MapApplication.prototype.defaultConfig = function(htmlTarget, htmlSource){        
-           this.onContainer = 'map';
-           this.mapZoom = 7;
-           this.sourceClass = '.central';
-
-           this.centralMarker = {
-               url: 'images/marker-central.png',
-               size: new google.maps.Size(19,31),
-               origin: new google.maps.Point(0,0),
-               anchor: new google.maps.Point(9,31),
-           };
-           this.mapPosition = {
-               lat: 52.265472, 
-               lng: 19.305168
-           };       
-
-           this.mapOptions = {
-               mapTypeId: google.maps.MapTypeId.ROADMAP,
-               scrollwheel: false,
-               disableDefaultUI: true
-           };
-           if(htmlTarget){
-               this.onContainer = htmlTarget;
-           }
-           if(htmlSource){
-               this.sourceClass = htmlSource;
-           }
     };
 
     function GoogleOprator(){
@@ -165,6 +171,7 @@
 
     function Map(config){
         this.config = config;
+        this.map;
     };
 
     Map.prototype.drawMap = function (options){    
@@ -200,7 +207,6 @@
                 }
             }, function(err){
                 console.warn('ERROR(' + err.code + '): ' + err.message);
-                //Map.config.
                 callback();
             }, navigatorOptions);                                                
         }

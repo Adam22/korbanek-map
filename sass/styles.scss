@@ -1,14 +1,16 @@
 @import	 "bootstrap";
 #map {
-	width: 100%;
-	min-height: 800px;
+    width: 100%;
+    min-height: 800px;
+}
+.map {
+    width: 100%;
+    min-height: 800px;
 }
 
 .map-container {
     position: relative;
-    overflow: hidden;;
-/*    margin-left: 16.66667%;
-    margin-right: 16.66667%;*/
+    overflow: hidden;
 }
 .map-container:before, .map-container:after, .map:before, .map:after {
     position: absolute;
