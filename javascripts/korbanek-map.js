@@ -6,6 +6,7 @@
             return new F();
         };
     }
+    
     $jM = jQuery.noConflict();
     $jM(document).ready(function(){                 
         google.maps.event.addDomListener(window, "load", init);    
@@ -14,6 +15,7 @@
     function init(){
         $jM('div[data-map-config]').each(function(){
             var options = $jM(this).data('map-config');
+            options['onContainer'] = $jM(this).attr('id');
             $jM(this).searchFeatureUI(options).createGoogleMap(options);
         });
     };
