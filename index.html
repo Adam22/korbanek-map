@@ -16,14 +16,8 @@
 	</head>
 	<body>
 	<h2> Korbanek Map</h2>
-        <div class="form-group">
-          <label for="submit">Address</label>
-          <input type="text" class="form-control" id="address">
-          <input class="btn btn-default" type="submit" id="submit" value="Submit">
-          <input class="btn btn-default" type="button" id="reset-map" value="Reset">
-        </div>        
 	<div class="map-container">
-            <div class="map" id="map" data-map-config='{"sourceClass":".central"}'></div>
+            <div class="map" id="map" data-map-config='{"sourceClass":".dealer", "searchFeature":true}'></div>
 	</div>
         <div id="dealers-detail">            
             <div class="dealer central" data-lat="52.458764" data-lng="16.646641000000045">

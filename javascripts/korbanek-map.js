@@ -10,31 +10,27 @@
     $jM(document).ready(function(){                 
         google.maps.event.addDomListener(window, "load", init);    
     });  
-    
+
     function init(){
         $jM('div[data-map-config]').each(function(){
-            $jM(this).setConfig().createGoogleMap();
+            var options = $jM(this).data('map-config');
+            $jM(this).searchFeatureUI(options).createGoogleMap(options);
         });
     };
-    
-    $jM.fn.setConfig = function(){       
-        if(typeof $jM(this).data('map-config') == 'object'){
-            var options = $jM(this).data('map-config');
-            options['onContainer'] = $jM(this).attr('id');
-        }
-        return this;
-    };
-    
+
     $jM.fn.createGoogleMap = function(options){
+        console.log(options);
         var mapOptions = $jM.extend({}, $jM.fn.createGoogleMap.defaults, options);
         var app = new MapApplication(mapOptions);
         return this;
     };
-    
+
     $jM.fn.createGoogleMap.defaults = {
         onContainer: 'map',
         sourceClass: '.dealer',
-        mapZoom: 7,        
+        mapZoom: 7,
+        searchFeature: false,
+        addressInputID: 'address',
         centralMarker: {
             url: 'images/marker-central.png',
             size: new google.maps.Size(19,31),
@@ -52,6 +48,18 @@
         }                    
     };
     
+    $jM.fn.searchFeatureUI = function(options){
+        if(options.searchFeature){
+            console.log(this);
+            $jM(this).parent().before('<div class="form-group">\n\
+                                        <label for="submit">Address</label>\n\
+                                        <input type="text" class="form-control" id="address">\n\
+                                        <input class="btn btn-default" type="submit" id="submit" value="Submit">\n\
+                                      </div>');
+        }
+        return this;
+    };
+
     function MapApplication(config){            
         this.korbanekMap = new KorbanekMap(config);
         this.googleOperator = new GoogleOprator();    
@@ -60,31 +68,37 @@
 
         this.korbanekMap.setupStartingLatLng(function(pos){
             if(pos){
-                //self.korbanekMap.map.setZoom(8);
+                self.korbanekMap.config.mapZoom = 9;
                 self.korbanekMap.config.mapPosition = pos;            
             }
             self.korbanekMap.drawMap(self.korbanekMap.config);            
             self.korbanekMap.setupMarkersOnMap(self.korbanekMap.markerSet, self.korbanekMap.map);            
-
+            
         });
+        if(this.korbanekMap.config.searchFeature){
+            this.setSearchFeature(self);
+        }
+    };
 
+    MapApplication.prototype.setSearchFeature = function(self){
         document.getElementById('submit').addEventListener('click', function(){
             self.korbanekMap.setupMarkersOnMap(self.korbanekMap.markerSet, null);
             self.korbanekMap.markerSet = [];
-            self.googleOperator.calculateDistance(self.googleOperator.distanceService, self.googleOperator.getOrigin(), self.korbanekMap.destinationSet, 
-                function(to, from){
-                    var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarker, to, self.korbanekMap.map);
-                    marker.addListener('click', function(){
-                       self.googleOperator.setInfoWindow(self.parseHTMLContent(to.lat(), to.lng()));
-                       self.googleOperator.infoWindow.open(self.korbanekMap.map, marker);
-                    });
-                    self.korbanekMap.markerSet.push(marker); 
-                    self.googleOperator.geocodeAddress(from, function(latlng){
-                       self.korbanekMap.markerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarker, latlng, null));
-                       self.googleOperator.setBounds(self.korbanekMap);
-                    });
-                }
-            );       
+            self.googleOperator.calculateDistance(self.googleOperator.distanceService, 
+                self.googleOperator.getOrigin(self.korbanekMap.config.addressInputID), 
+                self.korbanekMap.destinationSet, function(to, from){
+                        var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarker, to, self.korbanekMap.map);
+                        marker.addListener('click', function(){
+                           self.googleOperator.setInfoWindow(self.parseHTMLContent(to.lat(), to.lng()));
+                           self.googleOperator.infoWindow.open(self.korbanekMap.map, marker);
+                        });
+                        self.korbanekMap.markerSet.push(marker); 
+                        self.googleOperator.geocodeAddress(from, function(latlng){
+                           self.korbanekMap.markerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarker, latlng, null));
+                           self.googleOperator.setBounds(self.korbanekMap);
+                        });
+                    }
+                );       
         });
     };
 
@@ -225,8 +239,8 @@
            });
     };
 
-    GoogleOprator.prototype.getOrigin = function(){
-        this.address = document.getElementById('address').value;
+    GoogleOprator.prototype.getOrigin = function(from){
+        this.address = document.getElementById(from).value;
         return this.address;
     };
 
