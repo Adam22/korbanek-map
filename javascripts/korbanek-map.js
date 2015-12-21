@@ -30,6 +30,13 @@
         return content;
     };
     
+    $j.fn.obtainOnClickEvent = function(){
+        var event = navigator.userAgent.match(/iphone|ipad/gi)
+                ? "touchstart" 
+                : "click";
+        return event;
+    };
+    
     $j.fn.googleMapPlugin = function(options){
         var mapOptions = $j.extend({}, $j.fn.googleMapPlugin.defaults, options);
         $j.fn.googleMapPlugin.createMap(mapOptions).setDefaultMarkersSet().drawMap();
@@ -83,9 +90,9 @@
 
     $j.fn.googleMapPlugin.createMap = function(options){  
         this.korbanekMap = new KorbanekMap(options);
+        this.googleOperator = new GoogleOprator();
         var self = this;
-        if(this.korbanekMap.config.searchFeature){
-            this.googleOperator = new GoogleOprator();
+        if(this.korbanekMap.config.searchFeature){            
             this.korbanekMap.setSearchFeature(self);
         }
         return this;
@@ -107,7 +114,7 @@
                 self.korbanekMap.config.mapPosition = pos;
             }
             $j.fn.googleMapPlugin.applyGooleMap(self);
-        });
+        }, this.korbanekMap.config.navigatorOptions);
         return this; 
     };
     $j.fn.googleMapPlugin.applyGooleMap = function(self){
