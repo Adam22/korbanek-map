@@ -7,7 +7,7 @@
     function initialize(){
         $j('div[data-' + $j.fn.googleMapPlugin.defaults.mapSettingsDataAttr + ']').each(function(){
             var options = $j(this).data($j.fn.googleMapPlugin.defaults.mapSettingsDataAttr);
-            options['onContainer'] = $j(this).attr('id');
+            options['onContainer'] = $j(this).attr('id');  
             $j(this).googleMapPlugin(options);
         });
     };   
@@ -26,9 +26,9 @@
         return event;
     };
     
-    $j.fn.googleMapPlugin = function(options){
-        var mapOptions = $j.extend({}, $j.fn.googleMapPlugin.defaults, options);
-        $j(this).googleMapPlugin.searchFeatureUI(mapOptions).createMap(mapOptions).setDefaultMarkersSet().drawMap();
+    $j.fn.googleMapPlugin = function(options){        
+        var mapOptions = $j.extend({}, $j.fn.googleMapPlugin.defaults, options);        
+        $j(this).googleMapPlugin.searchFeatureUI(mapOptions, $j(this)).createMap(mapOptions).setDefaultMarkersSet().drawMap();
         return this;
     };
 
@@ -76,21 +76,21 @@
         maximumAge: 0
         }
     };
-    $j.fn.googleMapPlugin.searchFeatureUI = function(options){
-        console.log($j(this).parent());
-        if(options.searchFeature){            
-//            $j(this).parent().before('<div class="form-group">\n\
-//                                        <label for="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '">Address</label>\n\
-//                                        <input type="text" class="form-control" id="address">\n\
-//                                        <input class="btn btn-default" type="submit" id="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '" value="Submit">\n\
-//                                      </div>');
+    $j.fn.googleMapPlugin.searchFeatureUI = function(options, element){
+        if(options.searchFeature){
+            $j(element).parent().before('<div class="form-group">\n\
+                                            <label for="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '">Address</label>\n\
+                                            <input type="text" class="form-control" id="address">\n\
+                                            <input class="btn btn-default" type="submit" id="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '" value="Submit">\n\
+                                        </div>');
         }
         return this;
     };
-    $j.fn.googleMapPlugin.createMap = function(options){  
+    $j.fn.googleMapPlugin.createMap = function(options){
         this.korbanekMap = new KorbanekMap(options);
+        this.googleOperator = new GoogleOprator();
         var self = this;
-        if(this.korbanekMap.config.searchFeature){            
+        if(this.korbanekMap.config.searchFeature){           
             this.korbanekMap.setSearchFeature(self);
         }
         return this;
@@ -236,6 +236,7 @@
     };
 
     GoogleOprator.prototype = {
+        constructor: GoogleOprator,
         geocodeAddress: function(address, callback){
             var latlng;
             this.geocoder.geocode({'address':address},function(results, status){
@@ -303,5 +304,5 @@
                 content: content
             });    
         }
-    };
+    };    
 }( jQuery ));
