@@ -1,7 +1,7 @@
 (function ( $j ) {
     $j = jQuery.noConflict();  
     $j(document).ready(function(){
-        google.maps.event.addDomListener(window, $j.fn.googleMapPlugin.defaults.initializePluginOn, initialize);
+        initialize();
     });  
     
     function initialize(){
@@ -205,7 +205,7 @@
                     self.korbanekMap.destinationSet, function(to, from){
                             var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, to, self.korbanekMap.map);
                             marker.addListener($j.fn.googleMapPlugin.defaults.openInfoWindowOn, function(){
-                               self.googleOperator.setInfoWindow(self.parseHTMLContent(to.lat(), to.lng()));
+                               self.googleOperator.setInfoWindow($j.fn.parseHTMLContent(to.lat(), to.lng()));                               
                                self.googleOperator.infoWindow.open(self.korbanekMap.map, marker);
                             });
                             self.korbanekMap.markerSet.push(marker); 
