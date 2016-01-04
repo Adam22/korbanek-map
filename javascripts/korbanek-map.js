@@ -239,7 +239,8 @@
         
         this.combineOriginDestinationMarkers = function(self, to, from){
             var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, to, self.korbanekMap.map);            
-            var infoWindow = self.korbanekMap.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(to.lat(), to.lng()));                
+            var infoWindow = self.korbanekMap.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(to.lat(), to.lng()));
+            console.log(infoWindow.content);
             self.korbanekMap.googleOperator.setInfoWindowEvent(self, marker, config.openInfoWindowOn, infoWindow);
             self.korbanekMap.config.defaultMarkerSet.push(marker);
             self.korbanekMap.googleOperator.geocodeAddress(from, function(latlng){
@@ -330,7 +331,12 @@
         
         setInfoWindowEvent: function(self, marker, event, infoWindow){            
             marker.addListener(event, function(){   
-                infoWindow.open(self.map, marker);
+                if(self.map !== undefined){
+                    infoWindow.open(self.map, marker);
+                }
+                else{
+                    infoWindow.open(self.korbanekMap.map, marker);
+                }
             });
         },
 
