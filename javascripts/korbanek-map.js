@@ -12,10 +12,10 @@
         });
     };   
         
-    $j.fn.parseHTMLContent = function(lat, lng){
+    $j.fn.parseHTMLToContent = function(lat, lng){
         var selector = '[data-lat="' + lat + '"][data-lng="' + lng + '"]';
         var content;
-        content = $j(selector).html();
+        content = $j(selector).html();        
         return content;
     };
     
@@ -27,7 +27,9 @@
     };
     
     $j.fn.googleMapPlugin = function(options){        
-        var mapOptions = $j.extend({}, $j.fn.googleMapPlugin.defaults, options);        
+        var mapOptions = $j.extend({}, $j.fn.googleMapPlugin.defaults, options);
+        $j.fn.googleMapPlugin.defaults.openInfoWindowOn = $j.fn.obtainOnClickEvent();
+        $j.fn.googleMapPlugin.defaults.startSearchOn = $j.fn.obtainOnClickEvent();
         $j(this).googleMapPlugin.searchFeatureUI(mapOptions, $j(this)).createMap(mapOptions).setDefaultMarkersSet().drawMap();
         return this;
     };
@@ -36,8 +38,7 @@
         
         //Events
         startSearchOn: 'click',
-        openInfoWindowOn: 'click',
-        initializePluginOn: 'load',
+        openInfoWindowOn: 'click',        
         
         //Selectors
         defaultContainerID: 'map',
@@ -78,20 +79,40 @@
     };
     $j.fn.googleMapPlugin.searchFeatureUI = function(options, element){
         if(options.searchFeature){
-            $j(element).parent().before('<div class="form-group">\n\
-                                            <label for="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '">Address</label>\n\
-                                            <input type="text" class="form-control" id="address">\n\
-                                            <input class="btn btn-default" type="submit" id="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '" value="Submit">\n\
-                                        </div>');
+            $j(element).parent().before(
+                '<div class="form-group">\n\
+                    <label for="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '">Address</label>\n\
+                    <input type="text" class="form-control" id="address">\n\
+                    <input class="btn btn-default" type="submit" id="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '" value="Submit">\n\
+                </div>');
         }
         return this;
     };
     $j.fn.googleMapPlugin.createMap = function(options){
         this.korbanekMap = new KorbanekMap(options);
-        this.googleOperator = new GoogleOprator();
         var self = this;
         if(this.korbanekMap.config.searchFeature){           
-            this.korbanekMap.setSearchFeature(self);
+            this.korbanekMap.setupSearchFeature(self);
+        }
+        return this;
+    };
+    
+    $j.fn.googleMapPlugin.detectUserPosition = function(self){
+        this.korbanekMap.setupStartingLatLng(function(pos){
+            if(pos){
+                self.korbanekMap.config.mapZoom = 9;
+                self.korbanekMap.config.mapPosition = pos;
+            }
+            $j.fn.googleMapPlugin.applyGooleMap(self);
+        }, this.korbanekMap.config.navigatorOptions);
+        return this; 
+    };
+    
+    $j.fn.googleMapPlugin.setDefaultMarkersSet = function(){
+        if(this.korbanekMap.config.showAll){
+           this.korbanekMap.config.defaultMarkerSet = this.korbanekMap.markerSet;
+        }else{
+           this.korbanekMap.config.defaultMarkerSet = this.korbanekMap.centralMarker;
         }
         return this;
     };
@@ -105,27 +126,11 @@
         }
         return this;
     };
-    $j.fn.googleMapPlugin.detectUserPosition = function(self){
-        this.korbanekMap.setupStartingLatLng(function(pos){
-            if(pos){
-                self.korbanekMap.config.mapZoom = 9;
-                self.korbanekMap.config.mapPosition = pos;
-            }
-            $j.fn.googleMapPlugin.applyGooleMap(self);
-        }, this.korbanekMap.config.navigatorOptions);
-        return this; 
-    };
+    
     $j.fn.googleMapPlugin.applyGooleMap = function(self){
         self.korbanekMap.embedMap(self.korbanekMap.config);
         self.korbanekMap.setupMarkersOnMap(self.korbanekMap.config.defaultMarkerSet, self.korbanekMap.map);
-    };
-    $j.fn.googleMapPlugin.setDefaultMarkersSet = function(){
-        if(this.korbanekMap.config.showAll){
-           this.korbanekMap.config.defaultMarkerSet = this.korbanekMap.markerSet;
-        }else{
-           this.korbanekMap.config.defaultMarkerSet = this.korbanekMap.centralMarker;
-        }
-        return this;
+        self.korbanekMap.mapResize(self.korbanekMap.map);
     };
     
     function Map(config){
@@ -169,14 +174,23 @@
                     callback();
                 }, navigatorOptions);                                                
             }
+        },
+        
+        mapResize: function(map){
+            google.maps.event.addDomListener(window, "resize", function() {
+                var center = map.getCenter();
+                google.maps.event.trigger(map, "resize");
+                map.setCenter(center); 
+            });
         }
     };
     
     function KorbanekMap(config){
         Map.call(this, config);
         this.map;
-        this.nearestPionts = [];        
-        this.setDestinationSource = function(from){
+        this.googleOperator = new GoogleOprator();
+        this.nearestPionts = [];
+        this.setDestinationCollection = function(from){
             var destinations = new Array();
             $j(from).each(function(){
                 var position = new google.maps.LatLng({lat: $j(this).data('lat'), lng: $j(this).data('lng')});
@@ -184,43 +198,60 @@
             });
             return destinations;
         };
-        this.createMarkers = function(icon, sourceSet, map){
+        
+        this.createMarkers = function(icon, sourceSet){
+            var self = this;
             var markers = Array();
             for(var i = 0; i < sourceSet.length; i++){
-                markers.push(Map.prototype.putMarker(icon, sourceSet[i], map));
+                var marker = Map.prototype.putMarker(icon, sourceSet[i], null);                
+                var infoWindow = this.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(marker.getPosition().lat(), marker.getPosition().lng()));                
+                this.googleOperator.setInfoWindowEvent(self, marker, config.openInfoWindowOn, infoWindow);
+                markers.push(marker);                
             };
             return markers;
-        };
+        };                
+        
         this.setupMarkersOnMap = function(markerSet, map){
             for (var i = 0; i < markerSet.length; i++){
                 markerSet[i].setMap(map);
             };
         };
-        this.setSearchFeature = function(self){
+        
+        this.clearMarkers = function(){
+            this.setupMarkersOnMap(config.defaultMarkerSet, null);
+        };
+        
+        this.setupSearchFeature = function(self){
             document.getElementById(self.korbanekMap.config.bindSearchFeatureTo).addEventListener(self.korbanekMap.config.startSearchOn, function(){
-                self.korbanekMap.setupMarkersOnMap(self.korbanekMap.markerSet, null);
-                self.korbanekMap.markerSet = [];                
-                self.googleOperator.calculateDistance(self.googleOperator.distanceService, 
-                    self.googleOperator.getOrigin(self.korbanekMap.config.addressInputId), 
-                    self.korbanekMap.destinationSet, function(to, from){
-                            var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, to, self.korbanekMap.map);
-                            marker.addListener($j.fn.googleMapPlugin.defaults.openInfoWindowOn, function(){
-                               self.googleOperator.setInfoWindow($j.fn.parseHTMLContent(to.lat(), to.lng()));                               
-                               self.googleOperator.infoWindow.open(self.korbanekMap.map, marker);
-                            });
-                            self.korbanekMap.markerSet.push(marker); 
-                            self.googleOperator.geocodeAddress(from, function(latlng){
-                               self.korbanekMap.markerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarker, latlng, null));
-                               self.googleOperator.setBounds(self.korbanekMap);
-                            });
-                        }
-                    );       
+                console.log();
+                self.korbanekMap.clearMarkers();
+                self.korbanekMap.googleOperator.calculateDistance(
+                    self.korbanekMap.googleOperator.distanceService,
+                    self.korbanekMap.googleOperator.getOriginAddress(self.korbanekMap.config.addressInputId),
+                    self.korbanekMap.destinationSet,
+                    self,
+                    function(self, to, from){
+                        self.korbanekMap.config.defaultMarkerSet = [];
+                        self.korbanekMap.combineOriginDestinationMarkers(self, to, from);
+                    });
             });
         };
-        this.centralSource = this.setDestinationSource(config.centralMarkerClass);
-        this.destinationSet = this.setDestinationSource(config.markersSourceClass);
-        this.centralMarker = this.createMarkers(config.centralMarkerIcon, this.centralSource, null);
-        this.markerSet = this.createMarkers(config.centralMarkerIcon, this.destinationSet, null);
+        
+        this.combineOriginDestinationMarkers = function(self, to, from){
+            var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, to, self.korbanekMap.map);            
+            var infoWindow = self.korbanekMap.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(to.lat(), to.lng()));                
+            self.korbanekMap.googleOperator.setInfoWindowEvent(self, marker, config.openInfoWindowOn, infoWindow);
+            self.korbanekMap.config.defaultMarkerSet.push(marker);
+            self.korbanekMap.googleOperator.geocodeAddress(from, function(latlng){
+                self.korbanekMap.config.defaultMarkerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, latlng, null));
+                self.korbanekMap.googleOperator.setBounds(self.korbanekMap);
+            });
+        };
+        
+        this.centralSource = this.setDestinationCollection(config.centralMarkerClass);
+        this.destinationSet = this.setDestinationCollection(config.markersSourceClass);
+        this.centralMarker = this.createMarkers(config.centralMarkerIcon, this.centralSource);
+        this.markerSet = this.createMarkers(config.centralMarkerIcon, this.destinationSet);
     };
     
     KorbanekMap.prototype = Object.create(Map.prototype, {
@@ -228,8 +259,6 @@
     });
     
     function GoogleOprator(){
-        this.address;
-        this.infoWindow;
         this.geocoder = new google.maps.Geocoder();
         this.distanceService = new google.maps.DistanceMatrixService();
         this.bounds = new google.maps.LatLngBounds();
@@ -254,7 +283,7 @@
             });  
         },
 
-        calculateDistance: function(distanceMatrixService, origin, destinationSet, callback){
+        calculateDistance: function(distanceMatrixService, origin, destinationSet, self, callback){
             distanceMatrixService.getDistanceMatrix({
                 origins: [origin],
                 destinations: destinationSet,
@@ -271,38 +300,45 @@
                     for (var i = 0; i < origins.length; i++) {
                         var results = response.rows[i].elements;
                             from = origins[i];
-                            for (var j = 0; j < results.length; j++) {                        
-                                var element = results[j];                                    
-                                if (minDistance > element.distance.value){                            
+                            for (var j = 0; j < results.length; j++) {
+                                var element = results[j];                   
+                                if (minDistance > element.distance.value){
                                     minDistance = element.distance.value;
                                     nearestAddress =  destinationSet[j];
                                 }
                             }
                     }
-                    callback(nearestAddress, from);
-                }       
+                    callback(self, nearestAddress, from);
+                }
                });
         },
 
-        getOrigin: function(from){
-            this.address = document.getElementById(from).value;
-            return this.address;
+        getOriginAddress: function(from){
+            var address = document.getElementById(from).value;
+            return address;
         },
 
         setBounds: function(korbanekMap){
             var bounds = new google.maps.LatLngBounds();
-            for(var i = 0; i < korbanekMap.markerSet.length; i++) {
-                bounds.extend(korbanekMap.markerSet[i].getPosition());                        
+            for(var i = 0; i < korbanekMap.config.defaultMarkerSet.length; i++) {
+                bounds.extend(korbanekMap.config.defaultMarkerSet[i].getPosition());                        
             }
             korbanekMap.map.setCenter(bounds.getCenter());            
             korbanekMap.map.fitBounds(bounds);
             korbanekMap.map.setZoom(korbanekMap.map.getZoom() - 1); 
         },
+        
+        setInfoWindowEvent: function(self, marker, event, infoWindow){            
+            marker.addListener(event, function(){   
+                infoWindow.open(self.map, marker);
+            });
+        },
 
         setInfoWindow: function(content){
-            this.infoWindow = new google.maps.InfoWindow({
+            var infoWindow = new google.maps.InfoWindow({
                 content: content
-            });    
+            });
+            return infoWindow;
         }
     };    
 }( jQuery ));
