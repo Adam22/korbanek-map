@@ -222,15 +222,14 @@
         };
         
         this.setupSearchFeature = function(self){
-            document.getElementById(self.korbanekMap.config.bindSearchFeatureTo).addEventListener(self.korbanekMap.config.startSearchOn, function(){
-                console.log();
-                self.korbanekMap.clearMarkers();
+            document.getElementById(self.korbanekMap.config.bindSearchFeatureTo).addEventListener(self.korbanekMap.config.startSearchOn, function(){              
                 self.korbanekMap.googleOperator.calculateDistance(
                     self.korbanekMap.googleOperator.distanceService,
                     self.korbanekMap.googleOperator.getOriginAddress(self.korbanekMap.config.addressInputId),
                     self.korbanekMap.destinationSet,
                     self,
                     function(self, to, from){
+                        self.korbanekMap.clearMarkers();
                         self.korbanekMap.config.defaultMarkerSet = [];
                         self.korbanekMap.combineOriginDestinationMarkers(self, to, from);
                     });
@@ -238,9 +237,9 @@
         };
         
         this.combineOriginDestinationMarkers = function(self, to, from){
+            //self.korbanekMap.clearMarkers();            
             var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, to, self.korbanekMap.map);            
-            var infoWindow = self.korbanekMap.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(to.lat(), to.lng()));
-            console.log(infoWindow.content);
+            var infoWindow = self.korbanekMap.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(to.lat(), to.lng()));            
             self.korbanekMap.googleOperator.setInfoWindowEvent(self, marker, config.openInfoWindowOn, infoWindow);
             self.korbanekMap.config.defaultMarkerSet.push(marker);
             self.korbanekMap.googleOperator.geocodeAddress(from, function(latlng){
