@@ -1,45 +1,18 @@
 (function ( $j ) {
-    $j = jQuery.noConflict();  
+    //Declare no-conflict
+    $j = jQuery.noConflict();
+    //Strict mode
+    'use strict';
     $j(document).ready(function(){
         initialize();
     });  
     
-    function initialize(){
-        $j('div[data-' + $j.fn.googleMapPlugin.defaults.mapSettingsDataAttr + ']').each(function(){
-            var options = $j(this).data($j.fn.googleMapPlugin.defaults.mapSettingsDataAttr);
-            options['onContainer'] = $j(this).attr('id');  
-            $j(this).googleMapPlugin(options);
-        });
-    };   
-        
-    $j.fn.parseHTMLToContent = function(lat, lng){
-        var selector = '[data-lat="' + lat + '"][data-lng="' + lng + '"]';
-        var content;
-        content = $j(selector).html();        
-        return content;
-    };
-    
-    $j.fn.obtainOnClickEvent = function(){
-        var event = navigator.userAgent.match(/iphone|ipad/gi)
-                ? "touchstart" 
-                : "click";
-        return event;
-    };
-    
-    $j.fn.googleMapPlugin = function(options){        
-        var mapOptions = $j.extend({}, $j.fn.googleMapPlugin.defaults, options);
-        $j.fn.googleMapPlugin.defaults.openInfoWindowOn = $j.fn.obtainOnClickEvent();
-        $j.fn.googleMapPlugin.defaults.startSearchOn = $j.fn.obtainOnClickEvent();
-        $j(this).googleMapPlugin.searchFeatureUI(mapOptions, $j(this)).createMap(mapOptions).setDefaultMarkersSet().drawMap();
-        return this;
-    };
+     var defaults = {
 
-    $j.fn.googleMapPlugin.defaults = {
-        
         //Events
         startSearchOn: 'click',
         openInfoWindowOn: 'click',        
-        
+
         //Selectors
         defaultContainerID: 'map',
         markersSourceClass: '.dealer',
@@ -47,8 +20,8 @@
         addressInputId: 'address',
         mapSettingsDataAttr:'map-config',
         bindSearchFeatureTo: 'submit',
-        
-        //Map Settings
+
+        //Map Default Settings
         detectUserPosition: true,
         showAll: false,
         mapZoom: 7,
@@ -69,7 +42,7 @@
             scrollwheel: false,
             disableDefaultUI: true
         },
-        
+
         //Navigatot Settings
         navigatorOptions:{
         enableHighAccuracy: true,
@@ -77,186 +50,206 @@
         maximumAge: 0
         }
     };
-    $j.fn.googleMapPlugin.searchFeatureUI = function(options, element){
-        if(options.searchFeature){
+    
+    function initialize(){
+        $j('div[data-' + defaults.mapSettingsDataAttr + ']').each(function(){            
+            $j(this).GoogleMapPlugin();
+        });
+    }; 
+    //Plugin Definition
+    $j.fn.GoogleMapPlugin = function(){
+        var self = this;
+        //Retrive Data
+        var options = $j(this).data(defaults.mapSettingsDataAttr);
+        //Container ID
+        options['onContainer'] = $j(this).attr('id');  
+        //Info Window Open event
+        options['openInfoWindowOn'] = $j.fn.GoogleMapPlugin.prototype.obtainOnClickEvent();
+        //Start Search On event
+        options['startSearchOn'] = $j.fn.GoogleMapPlugin.prototype.obtainOnClickEvent();
+        //Detect User Position from Browser
+        
+        $j.fn.GoogleMapPlugin.prototype.retriveUserPosition(options, self, function(){
+            //Compose Settings Object
+            var mapOptions = $j.extend({}, defaults, options);
+            //Start jQuery Plugin Chain
+            console.log($j(this));
+            $j(this).GoogleMapPlugin.searchFeatureUI(mapOptions, $j(self)).createMap(mapOptions);
+        });
+    };
+    
+    //Insert Search Field
+    $j.fn.GoogleMapPlugin.searchFeatureUI = function(mapOptions, element){
+        if(mapOptions.searchFeature){
             $j(element).parent().before(
                 '<div class="form-group">\n\
-                    <label for="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '">Address</label>\n\
+                    <label for="' + mapOptions.bindSearchFeatureTo + '">Address</label>\n\
                     <input type="text" class="form-control" id="address">\n\
-                    <input class="btn btn-default" type="submit" id="' + $j.fn.googleMapPlugin.defaults.bindSearchFeatureTo + '" value="Submit">\n\
+                    <input class="btn btn-default" type="submit" id="' + mapOptions.bindSearchFeatureTo + '" value="Submit">\n\
                 </div>');
         }
         return this;
     };
-    $j.fn.googleMapPlugin.createMap = function(options){
-        this.korbanekMap = new KorbanekMap(options);
-        var self = this;
-        if(this.korbanekMap.config.searchFeature){           
-            this.korbanekMap.setupSearchFeature(self);
+    
+    $j.fn.GoogleMapPlugin.createMap = function(options){
+        //Apply GoogleMap on source element
+        this.korbanekMap = new KorbanekMap(options);        
+        this.korbanekMap.embedMap();        
+        this.korbanekMap.mapResize(this.korbanekMap.map);
+        //Create markers set
+        this.centralSource = this.korbanekMap.setDestinationCollection(this.korbanekMap.config.centralMarkerClass);
+        this.destinationSet = this.korbanekMap.setDestinationCollection(this.korbanekMap.config.markersSourceClass);
+        this.centralMarker = this.korbanekMap.createMarkers(this.korbanekMap.config.centralMarkerIcon, this.centralSource);
+        this.markerSet = this.korbanekMap.createMarkers(this.korbanekMap.config.centralMarkerIcon, this.destinationSet);
+        if (options.showAll){
+            this.korbanekMap.config.defaultMarkerSet = this.markerSet;
+        }else{
+            this.korbanekMap.config.defaultMarkerSet = this.centralMarker;
         }
+        //Put markers on the map
+        this.korbanekMap.setupMarkersOnMap(this.korbanekMap.config.defaultMarkerSet, this.korbanekMap.map);
+        
         return this;
     };
     
-    $j.fn.googleMapPlugin.detectUserPosition = function(self){
-        this.korbanekMap.setupStartingLatLng(function(pos){
+    $j.fn.GoogleMapPlugin.prototype.obtainOnClickEvent = function(){        
+        var event = navigator.userAgent.match(/iphone|ipad/gi)
+                ? "touchstart" 
+                : "click";
+        return event;
+    };   
+    
+    $j.fn.GoogleMapPlugin.prototype.detectUserPosition = function(callback, navigatorOptions){   
+        if (navigator.geolocation){
+            navigator.geolocation.getCurrentPosition(function(position){
+                var pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                if (typeof callback !== 'function') {
+                    callback = false;
+                }
+                else{                            
+                    callback(pos);
+                }
+            }, function(err){
+                console.warn('ERROR(' + err.code + '): ' + err.message);
+                callback();
+            }, navigatorOptions);                                                
+        }
+    };
+        
+    $j.fn.GoogleMapPlugin.prototype.retriveUserPosition = function(options, self, callback){
+        this.detectUserPosition(function(pos){
             if(pos){
-                self.korbanekMap.config.mapZoom = 9;
-                self.korbanekMap.config.mapPosition = pos;
+                options['mapZoom'] = 9;
+                options['mapPosition'] = pos;
             }
-            $j.fn.googleMapPlugin.applyGooleMap(self);
-        }, this.korbanekMap.config.navigatorOptions);
-        return this; 
-    };
-    
-    $j.fn.googleMapPlugin.setDefaultMarkersSet = function(){
-        if(this.korbanekMap.config.showAll){
-           this.korbanekMap.config.defaultMarkerSet = this.korbanekMap.markerSet;
-        }else{
-           this.korbanekMap.config.defaultMarkerSet = this.korbanekMap.centralMarker;
-        }
-        return this;
-    };
-    
-    $j.fn.googleMapPlugin.drawMap = function(){
-        var self = this;
-        if(this.korbanekMap.config.detectUserPosition){
-            $j.fn.googleMapPlugin.detectUserPosition(self);
-        }else{
-            $j.fn.googleMapPlugin.applyGooleMap(self);
-        }
-        return this;
-    };
-    
-    $j.fn.googleMapPlugin.applyGooleMap = function(self){
-        self.korbanekMap.embedMap(self.korbanekMap.config);
-        self.korbanekMap.setupMarkersOnMap(self.korbanekMap.config.defaultMarkerSet, self.korbanekMap.map);
-        self.korbanekMap.mapResize(self.korbanekMap.map);
-    };
+            callback(self);
+        }, defaults.navigatorOptions);        
+    };   
     
     function Map(config){
         this.config = config;
     };
 
-    Map.prototype = {
-        constructor: Map,
-        embedMap: function (options){    
-            var mapCenter = new google.maps.LatLng(options.mapPosition);
-            this.map = new google.maps.Map(document.getElementById(options.onContainer), options.mapOptions);            
+    Map.prototype.embedMap = function (){    
+            var mapCenter = new google.maps.LatLng(this.config.mapPosition);
+            this.map = new google.maps.Map(document.getElementById(this.config.onContainer), this.config.mapOptions);            
             this.map.setCenter(mapCenter);
-            this.map.setZoom(options.mapZoom);
-        },
-
-        putMarker:  function(icon, position, map){
-            return new google.maps.Marker({
-              map: map,
-              icon: icon,
-              animation: google.maps.Animation.DROP,
-              position: position,
-              title: 'korbanek-map'
-          });
-        },
-
-        setupStartingLatLng: function(callback, navigatorOptions){   
-            if (navigator.geolocation){
-                navigator.geolocation.getCurrentPosition(function(position){
-                    var pos = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    if (typeof callback !== 'function') {
-                        callback = false;
-                    }
-                    else{                            
-                        callback(pos);
-                    }
-                }, function(err){
-                    console.warn('ERROR(' + err.code + '): ' + err.message);
-                    callback();
-                }, navigatorOptions);                                                
-            }
-        },
-        
-        mapResize: function(map){
-            google.maps.event.addDomListener(window, "resize", function() {
-                var center = map.getCenter();
-                google.maps.event.trigger(map, "resize");
-                map.setCenter(center); 
-            });
-        }
+            this.map.setZoom(this.config.mapZoom);
     };
-    
+
+    Map.prototype.putMarker = function(icon, position, map){
+        return new google.maps.Marker({
+            map: map,
+            icon: icon,
+            animation: google.maps.Animation.DROP,
+            position: position,
+            title: 'korbanek-map'
+        });
+    };    
+
+    Map.prototype.mapResize = function(map){
+        google.maps.event.addDomListener(window, "resize", function() {
+            var center = map.getCenter();
+            google.maps.event.trigger(map, "resize");
+            map.setCenter(center); 
+        });
+    };
+
     function KorbanekMap(config){
         Map.call(this, config);
         this.map;
         this.googleOperator = new GoogleOprator();
         this.nearestPionts = [];
-        this.setDestinationCollection = function(from){
-            var destinations = new Array();
-            $j(from).each(function(){
-                var position = new google.maps.LatLng({lat: $j(this).data('lat'), lng: $j(this).data('lng')});
-                destinations.push(position);
-            });
-            return destinations;
+    };
+
+    KorbanekMap.prototype = Object.create(Map.prototype);
+    KorbanekMap.prototype.constructor = KorbanekMap;
+    
+    KorbanekMap.prototype.setDestinationCollection = function(from){
+        var destinations = new Array();
+        $j(from).each(function(){
+            var position = new google.maps.LatLng({lat: $j(this).data('lat'), lng: $j(this).data('lng')});
+            destinations.push(position);
+        });
+        return destinations;
+    };
+    KorbanekMap.prototype.parseHTMLToContent = function(lat, lng){
+        var selector = '[data-lat="' + lat + '"][data-lng="' + lng + '"]';
+        var content;
+        content = $j(selector).html();
+        return content;
+    };
+    KorbanekMap.prototype.createMarkers = function(icon, sourceSet){
+        var self = this;
+        var markers = Array();
+        for(var i = 0; i < sourceSet.length; i++){
+            var marker = Map.prototype.putMarker(icon, sourceSet[i], null);                
+            var infoWindow = this.googleOperator.setInfoWindow(this.parseHTMLToContent(marker.getPosition().lat(), marker.getPosition().lng()));            
+            this.googleOperator.setInfoWindowEvent(self, marker, this.config.openInfoWindowOn, infoWindow);
+            markers.push(marker);                
         };
-        
-        this.createMarkers = function(icon, sourceSet){
-            var self = this;
-            var markers = Array();
-            for(var i = 0; i < sourceSet.length; i++){
-                var marker = Map.prototype.putMarker(icon, sourceSet[i], null);                
-                var infoWindow = this.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(marker.getPosition().lat(), marker.getPosition().lng()));                
-                this.googleOperator.setInfoWindowEvent(self, marker, config.openInfoWindowOn, infoWindow);
-                markers.push(marker);                
-            };
-            return markers;
-        };                
-        
-        this.setupMarkersOnMap = function(markerSet, map){
-            for (var i = 0; i < markerSet.length; i++){
-                markerSet[i].setMap(map);
-            };
+        return markers;
+    };  
+    
+    KorbanekMap.prototype.setupMarkersOnMap = function(markerSet, map){
+    for (var i = 0; i < markerSet.length; i++){
+            markerSet[i].setMap(map);
         };
-        
-        this.clearMarkers = function(){
-            this.setupMarkersOnMap(config.defaultMarkerSet, null);
-        };
-        
-        this.setupSearchFeature = function(self){
-            document.getElementById(self.korbanekMap.config.bindSearchFeatureTo).addEventListener(self.korbanekMap.config.startSearchOn, function(){              
-                self.korbanekMap.googleOperator.calculateDistance(
-                    self.korbanekMap.googleOperator.distanceService,
-                    self.korbanekMap.googleOperator.getOriginAddress(self.korbanekMap.config.addressInputId),
-                    self.korbanekMap.destinationSet,
-                    self,
-                    function(self, to, from){
-                        self.korbanekMap.clearMarkers();
-                        self.korbanekMap.config.defaultMarkerSet = [];
-                        self.korbanekMap.combineOriginDestinationMarkers(self, to, from);
-                    });
-            });
-        };
-        
-        this.combineOriginDestinationMarkers = function(self, to, from){
-            //self.korbanekMap.clearMarkers();            
-            var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, to, self.korbanekMap.map);            
-            var infoWindow = self.korbanekMap.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(to.lat(), to.lng()));            
-            self.korbanekMap.googleOperator.setInfoWindowEvent(self, marker, config.openInfoWindowOn, infoWindow);
-            self.korbanekMap.config.defaultMarkerSet.push(marker);
-            self.korbanekMap.googleOperator.geocodeAddress(from, function(latlng){
-                self.korbanekMap.config.defaultMarkerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, latlng, null));
-                self.korbanekMap.googleOperator.setBounds(self.korbanekMap);
-            });
-        };
-        
-        this.centralSource = this.setDestinationCollection(config.centralMarkerClass);
-        this.destinationSet = this.setDestinationCollection(config.markersSourceClass);
-        this.centralMarker = this.createMarkers(config.centralMarkerIcon, this.centralSource);
-        this.markerSet = this.createMarkers(config.centralMarkerIcon, this.destinationSet);
+    };
+       
+    KorbanekMap.prototype.clearMarkers = function(){
+        this.setupMarkersOnMap(this.config.defaultMarkerSet, null);
     };
     
-    KorbanekMap.prototype = Object.create(Map.prototype, {
-        constructor: KorbanekMap
-    });
+    KorbanekMap.prototype.setupSearchFeature = function(self){
+        document.getElementById(self.korbanekMap.config.bindSearchFeatureTo).addEventListener(self.korbanekMap.config.startSearchOn, function(){              
+            self.korbanekMap.googleOperator.calculateDistance(
+                self.korbanekMap.googleOperator.distanceService,
+                self.korbanekMap.googleOperator.getOriginAddress(self.korbanekMap.config.addressInputId),
+                self.korbanekMap.destinationSet,
+                self,
+                function(self, to, from){
+                    self.korbanekMap.clearMarkers();
+                    self.korbanekMap.config.defaultMarkerSet = [];
+                    self.korbanekMap.combineOriginDestinationMarkers(self, to, from);
+                });
+        });
+    };
+        
+    KorbanekMap.prototype.combineOriginDestinationMarkers = function(self, to, from){
+        //self.korbanekMap.clearMarkers();            
+        var marker = Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, to, self.korbanekMap.map);            
+        var infoWindow = self.korbanekMap.googleOperator.setInfoWindow($j.fn.parseHTMLToContent(to.lat(), to.lng()));            
+        self.korbanekMap.googleOperator.setInfoWindowEvent(self, marker, this.config.openInfoWindowOn, infoWindow);
+        self.korbanekMap.config.defaultMarkerSet.push(marker);
+        self.korbanekMap.googleOperator.geocodeAddress(from, function(latlng){
+            self.korbanekMap.config.defaultMarkerSet.push(Map.prototype.putMarker(self.korbanekMap.config.centralMarkerIcon, latlng, null));
+            self.korbanekMap.googleOperator.setBounds(self.korbanekMap);
+        });
+    };
     
     function GoogleOprator(){
         this.geocoder = new google.maps.Geocoder();
@@ -330,12 +323,7 @@
         
         setInfoWindowEvent: function(self, marker, event, infoWindow){            
             marker.addListener(event, function(){   
-                if(self.map !== undefined){
                     infoWindow.open(self.map, marker);
-                }
-                else{
-                    infoWindow.open(self.korbanekMap.map, marker);
-                }
             });
         },
 
