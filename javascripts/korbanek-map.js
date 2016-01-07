@@ -149,10 +149,10 @@
     };
 
     Map.prototype.embedMap = function (){    
-            var mapCenter = new google.maps.LatLng(this.config.mapPosition);
-            this.map = new google.maps.Map(document.getElementById(this.config.onContainer), this.config.mapOptions);            
-            this.map.setCenter(mapCenter);
-            this.map.setZoom(this.config.mapZoom);
+        var mapCenter = new google.maps.LatLng(this.config.mapPosition);
+        this.map = new google.maps.Map(document.getElementById(this.config.onContainer), this.config.mapOptions);            
+        this.map.setCenter(mapCenter);
+        this.map.setZoom(this.config.mapZoom);
     };
 
     Map.prototype.putMarker = function(icon, position, map){
