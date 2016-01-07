@@ -201,12 +201,14 @@
         });
         return destinations;
     };
+    
     KorbanekMap.prototype.parseHTMLToContent = function(lat, lng){
         var selector = '[data-lat="' + lat + '"][data-lng="' + lng + '"]';
         var content;
         content = $j(selector).html();
         return content;
     };
+    
     KorbanekMap.prototype.createMarkers = function(icon, sourceSet){
         var self = this;
         var markers = Array();
