@@ -186,7 +186,6 @@
         this.markerSet = this.createMarkers(this.config.centralMarkerIcon, this.destinationSet);
         //Setum Search feature
         if (this.config.searchFeature){
-            console.log(self.korbanekMap);
             this.setupSearchFeature(self);
         }
     };
@@ -281,61 +280,61 @@
             });  
         };
 
-        GoogleOprator.prototype.calculateDistance = function(distanceMatrixService, origin, destinationSet, self, callback){
-            distanceMatrixService.getDistanceMatrix({
-                origins: [origin],
-                destinations: destinationSet,
-                travelMode: google.maps.TravelMode.DRIVING,
-                unitSystem: google.maps.UnitSystem.METRIC,
-                avoidHighways: false,
-                avoidTolls: false                        
-            }, function(response, status){
-                if (status === google.maps.DistanceMatrixStatus.OK) {
-                    var origins = response.originAddresses;                    
-                    var minDistance = Infinity;
-                    var nearestAddress;
-                    var from;
-                    for (var i = 0; i < origins.length; i++) {
-                        var results = response.rows[i].elements;
-                            from = origins[i];
-                            for (var j = 0; j < results.length; j++) {
-                                var element = results[j];                   
-                                if (minDistance > element.distance.value){
-                                    minDistance = element.distance.value;
-                                    nearestAddress =  destinationSet[j];
-                                }
+    GoogleOprator.prototype.calculateDistance = function(distanceMatrixService, origin, destinationSet, self, callback){
+        distanceMatrixService.getDistanceMatrix({
+            origins: [origin],
+            destinations: destinationSet,
+            travelMode: google.maps.TravelMode.DRIVING,
+            unitSystem: google.maps.UnitSystem.METRIC,
+            avoidHighways: false,
+            avoidTolls: false                        
+        }, function(response, status){
+            if (status === google.maps.DistanceMatrixStatus.OK) {
+                var origins = response.originAddresses;                    
+                var minDistance = Infinity;
+                var nearestAddress;
+                var from;
+                for (var i = 0; i < origins.length; i++) {
+                    var results = response.rows[i].elements;
+                        from = origins[i];
+                        for (var j = 0; j < results.length; j++) {
+                            var element = results[j];                   
+                            if (minDistance > element.distance.value){
+                                minDistance = element.distance.value;
+                                nearestAddress =  destinationSet[j];
                             }
-                    }
-                    callback(self, nearestAddress, from);
+                        }
                 }
-               });
-        };
-
-        GoogleOprator.prototype.getOriginAddress = function(from){
-            var address = document.getElementById(from).value;
-            return address;
-        };
-
-        GoogleOprator.prototype.setBounds = function(korbanekMap){
-            var bounds = new google.maps.LatLngBounds();
-            for(var i = 0; i < korbanekMap.config.defaultMarkerSet.length; i++) {
-                bounds.extend(korbanekMap.config.defaultMarkerSet[i].getPosition());                        
+                callback(self, nearestAddress, from);
             }
-            korbanekMap.map.setCenter(bounds.getCenter());            
-            korbanekMap.map.fitBounds(bounds);
-            korbanekMap.map.setZoom(korbanekMap.map.getZoom() - 1); 
-        };
-        
-        GoogleOprator.prototype.setInfoWindowEvent = function(self, marker, event, infoWindow){            
-            marker.addListener(event, function(){   
-                infoWindow.open(self.map, marker);
-            });
-        };
+           });
+    };
 
-        GoogleOprator.prototype.setInfoWindow = function(content){
-            var infoWindow = new google.maps.InfoWindow({
-                content: content
-            });
-            return infoWindow;
-        };
+    GoogleOprator.prototype.getOriginAddress = function(from){
+        var address = document.getElementById(from).value;
+        return address;
+    };
+
+    GoogleOprator.prototype.setBounds = function(korbanekMap){
+        var bounds = new google.maps.LatLngBounds();
+        for(var i = 0; i < korbanekMap.config.defaultMarkerSet.length; i++) {
+            bounds.extend(korbanekMap.config.defaultMarkerSet[i].getPosition());                        
+        }
+        korbanekMap.map.setCenter(bounds.getCenter());            
+        korbanekMap.map.fitBounds(bounds);
+        korbanekMap.map.setZoom(korbanekMap.map.getZoom() - 1); 
+    };
+
+    GoogleOprator.prototype.setInfoWindowEvent = function(self, marker, event, infoWindow){            
+        marker.addListener(event, function(){   
+            infoWindow.open(self.map, marker);
+        });
+    };
+
+    GoogleOprator.prototype.setInfoWindow = function(content){
+        var infoWindow = new google.maps.InfoWindow({
+            content: content
+        });
+        return infoWindow;
+    };
 }( jQuery ));
