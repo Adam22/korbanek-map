@@ -34,8 +34,8 @@
             anchor: new google.maps.Point(9,31)
         },
         mapPosition: {
-            lat: 52.265472, 
-            lng: 19.305168
+            lat: 32.9809911, 
+            lng: -96.3048102
         },
         mapOptions: {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -67,14 +67,20 @@
         options['openInfoWindowOn'] = $j.fn.GoogleMapPlugin.prototype.obtainOnClickEvent();
         //Start Search On event
         options['startSearchOn'] = $j.fn.GoogleMapPlugin.prototype.obtainOnClickEvent();
-        //Detect User Position from Browser
-        
-        $j.fn.GoogleMapPlugin.prototype.retriveUserPosition(options, self, function(){
+        //Detect User Position from Browser        
+        if(options.detectUserPosition){
+            $j.fn.GoogleMapPlugin.prototype.retriveUserPosition(options, self, function(){
+                //Compose Settings Object
+                var mapOptions = $j.extend({}, defaults, options);
+                //Start jQuery Plugin Chain
+                $j(this).GoogleMapPlugin.searchFeatureUI(mapOptions, $j(self)).createMap(mapOptions);
+            });
+        }else{
             //Compose Settings Object
             var mapOptions = $j.extend({}, defaults, options);
             //Start jQuery Plugin Chain
-            $j(this).GoogleMapPlugin.searchFeatureUI(mapOptions, $j(self)).createMap(mapOptions);
-        });
+            $j(this).GoogleMapPlugin.searchFeatureUI(mapOptions, $j(self)).createMap(mapOptions);            
+        }
     };
     
     //Insert Search Field
