@@ -36,8 +36,8 @@
             anchor: new google.maps.Point(9,31)
         },
         mapPosition: {
-            lat: 32.9809911, 
-            lng: -96.3048102
+            lat: 52.265472, 
+            lng: 19.305168
         },
         mapOptions: {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
