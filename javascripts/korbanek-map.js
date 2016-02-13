@@ -4,7 +4,9 @@
     //Strict mode
     'use strict';
     $j(document).ready(function(){
-        initialize();
+        $j('div[data-' + defaults.mapSettingsDataAttr + ']').each(function(){            
+            $j(this).GoogleMapPlugin();
+        });
     });  
     
      var defaults = {
@@ -50,12 +52,7 @@
         maximumAge: 0
         }
     };
-    
-    function initialize(){
-        $j('div[data-' + defaults.mapSettingsDataAttr + ']').each(function(){            
-            $j(this).GoogleMapPlugin();
-        });
-    }; 
+
     //Plugin Definition
     $j.fn.GoogleMapPlugin = function(){
         var self = this;
