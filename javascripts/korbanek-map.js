@@ -30,7 +30,13 @@
         searchFeature: false,
         defaultMarkerSet: [],
         centralMarkerIcon: {
-            url: 'images/marker-central.png',
+            url: 'images/marker-central.png', 
+            size: new google.maps.Size(19,31),
+            origin: new google.maps.Point(0,0),
+            anchor: new google.maps.Point(9,31)
+        },
+        defaultMarkerIcon: {
+            url: 'images/marker-central.png', //
             size: new google.maps.Size(19,31),
             origin: new google.maps.Point(0,0),
             anchor: new google.maps.Point(9,31)
@@ -186,7 +192,7 @@
         this.centralSource = this.setDestinationCollection(this.config.centralMarkerClass);
         this.destinationSet = this.setDestinationCollection(this.config.markersSourceClass);
         this.centralMarker = this.createMarkers(this.config.centralMarkerIcon, this.centralSource);
-        this.markerSet = this.createMarkers(this.config.centralMarkerIcon, this.destinationSet);
+        this.markerSet = this.createMarkers(this.config.defaultMarkerIcon, this.destinationSet); // defaultMarkerIcon
         //Setum Search feature
         if (this.config.searchFeature){
             this.setupSearchFeature(self);
@@ -252,12 +258,12 @@
         
     KorbanekMap.prototype.combineOriginDestinationMarkers = function(self, to, from){
         //self.clearMarkers();            
-        var marker = Map.prototype.putMarker(self.config.centralMarkerIcon, to, self.map);            
+        var marker = Map.prototype.putMarker(self.config.defaultMarkerIcon, to, self.map);            // defaultMarkerIcon
         var infoWindow = self.googleOperator.setInfoWindow(self.parseHTMLToContent(to.lat(), to.lng()));            
         self.googleOperator.setInfoWindowEvent(self, marker, self.config.openInfoWindowOn, infoWindow);
         self.config.defaultMarkerSet.push(marker);
         self.googleOperator.geocodeAddress(from, function(latlng){
-            self.config.defaultMarkerSet.push(Map.prototype.putMarker(self.config.centralMarkerIcon, latlng, null));
+            self.config.defaultMarkerSet.push(Map.prototype.putMarker(self.config.defaultMarkerIcon, latlng, null)); // defaultMarkerIcon
             self.googleOperator.setBounds(self);
         });
     };
