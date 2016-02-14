@@ -29,14 +29,17 @@
         mapZoom: 7,
         searchFeature: false,
         defaultMarkerSet: [],
+        inputLabel: 'Address', // Input Label
+        inputText: 'text',  // Input Placeholder
+        searchButtonText: 'Search',  // Button Text
         centralMarkerIcon: {
             url: 'images/marker-central.png', 
-            size: new google.maps.Size(19,31),
+            size: new google.maps.Size(19,31),  // central marker icon source
             origin: new google.maps.Point(0,0),
             anchor: new google.maps.Point(9,31)
         },
         defaultMarkerIcon: {
-            url: 'images/marker-central.png', //
+            url: 'images/marker-central.png', // default marker icon source
             size: new google.maps.Size(19,31),
             origin: new google.maps.Point(0,0),
             anchor: new google.maps.Point(9,31)
@@ -91,9 +94,9 @@
         if(mapOptions.searchFeature){
             $j(element).parent().before(
                 '<div class="form-group">\n\
-                    <label for="' + mapOptions.bindSearchFeatureTo + '">Address</label>\n\
-                    <input type="text" class="form-control" id="address">\n\
-                    <input class="btn btn-default" type="submit" id="' + mapOptions.bindSearchFeatureTo + '" value="Submit">\n\
+                    <label for="' + mapOptions.bindSearchFeatureTo + '">' + mapOptions.inputLabel + '</label>\n\
+                    <input type="text" class="form-control" id="address" placeholder="' + mapOptions.inputText + '">\n\
+                    <input class="btn btn-default" type="submit" id="' + mapOptions.bindSearchFeatureTo + '" value="' + mapOptions.searchButtonText + '">\n\
                 </div>');
         }
         return this;
