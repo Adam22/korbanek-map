@@ -44,7 +44,7 @@
             origin: new google.maps.Point(0,0),
             anchor: new google.maps.Point(9,31)
         },
-        mapPosition: {
+        mapPosition: {  //  map center on start
             lat: 52.265472, 
             lng: 19.305168
         },
@@ -225,7 +225,7 @@
         var self = this;
         var markers = Array();
         for(var i = 0; i < sourceSet.length; i++){
-            var marker = Map.prototype.putMarker(icon, sourceSet[i], null);                
+            var marker = Map.prototype.putMarker(icon, sourceSet[i], null);            
             var infoWindow = this.googleOperator.setInfoWindow(this.parseHTMLToContent(marker.getPosition().lat(), marker.getPosition().lng()));            
             this.googleOperator.setInfoWindowEvent(self, marker, this.config.openInfoWindowOn, infoWindow);
             markers.push(marker);                
@@ -244,7 +244,6 @@
     };
     
     KorbanekMap.prototype.setupSearchFeature = function(self){
-        console.log(self);
         document.getElementById(this.config.bindSearchFeatureTo).addEventListener(this.config.startSearchOn, function(){              
             self.googleOperator.calculateDistance(
                 self.googleOperator.distanceService,
