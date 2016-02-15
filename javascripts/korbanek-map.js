@@ -102,7 +102,7 @@
         return this;
     };
     
-    $j.fn.GoogleMapPlugin.createMap = function(options){
+    $j.fn.GoogleMapPlugin.createMap = function(options){        
         //Apply GoogleMap on source element
         this.korbanekMap = new KorbanekMap(options);        
         this.korbanekMap.embedMap();        
