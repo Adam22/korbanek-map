@@ -26,6 +26,7 @@
         //Map Default Settings
         detectUserPosition: true,
         showAll: false,
+        filterZipCode: true,
         mapZoom: 7,
         searchFeature: false,
         defaultMarkerSet: [],
@@ -245,10 +246,17 @@
     
     KorbanekMap.prototype.setupSearchFeature = function(self){
         console.log(self);
-        document.getElementById(this.config.bindSearchFeatureTo).addEventListener(this.config.startSearchOn, function(){              
+        document.getElementById(this.config.bindSearchFeatureTo).addEventListener(this.config.startSearchOn, function(){  
+            var address = self.googleOperator.getOriginAddress(self.config.addressInputId)
+            if(self.config.filterZipCode){
+                address = self.googleOperator.filterZipCode(address);                
+            }
+            if(address == undefined){
+                return;
+            }
             self.googleOperator.calculateDistance(
                 self.googleOperator.distanceService,
-                self.googleOperator.getOriginAddress(self.config.addressInputId),
+                address,
                 self.destinationSet,
                 self,
                 function(self, to, from){
@@ -328,6 +336,15 @@
         var address = document.getElementById(from).value;
         return address;
     };
+
+    GoogleOprator.prototype.filterZipCode = function(inputText){
+        var regex = new RegExp('[0-9]{2}\\s[0-9]{3}|[0-9]{2}-[0-9]{3}');
+        var zipCode;
+        if(regex.exec(inputText)){
+            zipCode = regex.exec(inputText) + ' Polska';
+        }           
+        return zipCode;
+    }
 
     GoogleOprator.prototype.setBounds = function(korbanekMap){
         var bounds = new google.maps.LatLngBounds();
