@@ -1,8 +1,20 @@
 @import	 "bootstrap";
-#map {
-
+.map-container {
+    margin: 20px;
+    box-sizing: border-box;
 }
-.map {
+
+.container-fixed{
+    width: 480px;
+    height: 480px;
+}
+
+.map-fixed{
+    width: 480px;
+    height: 480px;
+}
+
+.map-full-width{
     width: 100%;
     min-height: 800px;
 }

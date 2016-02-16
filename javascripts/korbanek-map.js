@@ -26,12 +26,13 @@
         //Map Default Settings
         detectUserPosition: true,
         showAll: false,
-        mapZoom: 7,
         searchFeature: false,
-        defaultMarkerSet: [],
+        activeInfoWindows: true,
+        mapZoom: 7,        
         inputLabel: 'Address', // Input Label
         inputText: 'text',  // Input Placeholder
         searchButtonText: 'Search',  // Button Text
+        defaultMarkerSet: [],
         centralMarkerIcon: {
             url: 'images/marker-central.png', 
             size: new google.maps.Size(19,31),  // central marker icon source
@@ -225,9 +226,11 @@
         var self = this;
         var markers = Array();
         for(var i = 0; i < sourceSet.length; i++){
-            var marker = Map.prototype.putMarker(icon, sourceSet[i], null);            
-            var infoWindow = this.googleOperator.setInfoWindow(this.parseHTMLToContent(marker.getPosition().lat(), marker.getPosition().lng()));            
-            this.googleOperator.setInfoWindowEvent(self, marker, this.config.openInfoWindowOn, infoWindow);
+            var marker = Map.prototype.putMarker(icon, sourceSet[i], null);
+            if(this.config.activeInfoWindows){
+                var infoWindow = this.googleOperator.setInfoWindow(this.parseHTMLToContent(marker.getPosition().lat(), marker.getPosition().lng()));            
+                this.googleOperator.setInfoWindowEvent(self, marker, this.config.openInfoWindowOn, infoWindow);
+            }
             markers.push(marker);                
         };
         return markers;
